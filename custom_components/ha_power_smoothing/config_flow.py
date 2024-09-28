@@ -1,18 +1,10 @@
 import logging
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers import config_validation as cv
-import voluptuous as vol
+from homeassistant.helpers.selector import selector
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-
-# Simpelt skema med kun ét felt
-SIMPLE_SCHEMA = vol.Schema(
-    {
-        vol.Required("input_sensor"): cv.entity_id,  # Kun ét påkrævet felt
-    }
-)
 
 class PowerSmoothingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for Power Sensor Smoothing."""
@@ -29,13 +21,20 @@ class PowerSmoothingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if user_input is not None:
-            # Opret konfigurationsindgang uden yderligere validering
+            # Opret konfigurationsindgang uden brug af voluptuous
             return self.async_create_entry(title="Power Sensor Smoothing", data=user_input)
 
-        # Vis det simple skema
+        # Brug Home Assistant selectors i stedet for voluptuous
+        data_schema = {
+            "input_sensor": selector({"entity": {"domain": "sensor"}}),
+            "lowpass_time_constant": selector({"number": {"min": 1, "max": 60, "unit_of_measurement": "s"}}),
+            "median_sampling_size": selector({"number": {"min": 1, "max": 60, "unit_of_measurement": "samples"}}),
+            "ema_smoothing_window": selector({"number": {"min": 60, "max": 3600, "unit_of_measurement": "s"}}),
+        }
+
         return self.async_show_form(
             step_id="user",
-            data_schema=SIMPLE_SCHEMA,
+            data_schema=data_schema,
             errors=self._errors,
         )
 
@@ -56,10 +55,17 @@ class PowerSmoothingOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Handle options step."""
         if user_input is not None:
-            # Opret options-indgang uden yderligere validering
+            # Opret options-indgang uden brug af voluptuous
             return self.async_create_entry(title=self.config_entry.title, data=user_input)
+
+        # Brug Home Assistant selectors for options
+        data_schema = {
+            "lowpass_time_constant": selector({"number": {"min": 1, "max": 60, "unit_of_measurement": "s"}}),
+            "median_sampling_size": selector({"number": {"min": 1, "max": 60, "unit_of_measurement": "samples"}}),
+            "ema_smoothing_window": selector({"number": {"min": 60, "max": 3600, "unit_of_measurement": "s"}}),
+        }
 
         return self.async_show_form(
             step_id="init",
-            data_schema=SIMPLE_SCHEMA,
+            data_schema=data_schema,
         )
