@@ -1,9 +1,10 @@
 {
   "domain": "ha_power_smoothing",
-  "name": "Power Smoothing",
+  "name": "Power Sensor Smoothing",
   "version": "1.0",
   "config_flow": true,
   "documentation": "https://github.com/woopstar/ha_power_smoothing",
   "requirements": [],
-  "codeowners": ["@woopstar"]
+  "codeowners": ["@woopstar"],
+  "iot_class": "local_polling"
 }
