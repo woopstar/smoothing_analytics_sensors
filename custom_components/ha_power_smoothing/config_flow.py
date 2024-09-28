@@ -1,7 +1,6 @@
-import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.selector import selector
 from .const import DOMAIN
 
 class PowerSmoothingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -25,39 +24,72 @@ class PowerSmoothingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if user_input is None:
-            # If no user input, provide default values for the form.
+            # Default values for the form
             user_input = {
-                "input_sensor": "",  # Default empty entity_id
+                "input_sensor": "",
                 "lowpass_time_constant": 15,
                 "median_sampling_size": 15,
                 "ema_smoothing_window": 300
             }
         else:
-            # Validate the input here if necessary
+            # Basic validation
             if not user_input["input_sensor"]:
                 self._errors["input_sensor"] = "invalid_sensor"
             else:
-                # If no errors, create the entry.
+                # Create the entry with validated input
                 return self.async_create_entry(
                     title="Power Sensor Smoothing", data=user_input
                 )
 
-        return await self._show_config_form(user_input)
+        return self._show_config_form(user_input)
 
-    async def _show_config_form(self, user_input):
+    def _show_config_form(self, user_input):
         """Show the configuration form to the user."""
-        schema = vol.Schema({
-            vol.Required("input_sensor", default=user_input.get("input_sensor")): cv.entity_id,
-            vol.Optional("lowpass_time_constant", default=user_input.get("lowpass_time_constant", 15)): vol.Coerce(int),
-            vol.Optional("median_sampling_size", default=user_input.get("median_sampling_size", 15)): vol.Coerce(int),
-            vol.Optional("ema_smoothing_window", default=user_input.get("ema_smoothing_window", 300)): vol.Coerce(int),
-        })
+        data_schema = {
+            "input_sensor": selector({
+                "entity": {"domain": "sensor"}
+            }),
+            "lowpass_time_constant": selector({
+                "number": {
+                    "min": 1,
+                    "max": 60,
+                    "unit_of_measurement": "s",
+                    "mode": "box",
+                    "step": 1
+                }
+            }),
+            "median_sampling_size": selector({
+                "number": {
+                    "min": 1,
+                    "max": 60,
+                    "unit_of_measurement": "samples",
+                    "mode": "box",
+                    "step": 1
+                }
+            }),
+            "ema_smoothing_window": selector({
+                "number": {
+                    "min": 60,
+                    "max": 3600,
+                    "unit_of_measurement": "s",
+                    "mode": "box",
+                    "step": 60
+                }
+            })
+        }
 
         return self.async_show_form(
             step_id="user",
-            data_schema=schema,
+            data_schema=self.add_defaults_to_schema(data_schema, user_input),
             errors=self._errors
         )
+
+    def add_defaults_to_schema(self, schema, user_input):
+        """Helper method to add default values to the schema."""
+        for key, value in user_input.items():
+            schema[key]["default"] = value
+        return schema
+
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options for Power Sensor Smoothing integration."""
@@ -75,15 +107,39 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         return self._show_options_form()
 
-    async def _show_options_form(self):
+    def _show_options_form(self):
         """Show the options configuration form."""
-        schema = vol.Schema({
-            vol.Required("lowpass_time_constant", default=self.config_entry.options.get("lowpass_time_constant", 15)): vol.Coerce(int),
-            vol.Required("median_sampling_size", default=self.config_entry.options.get("median_sampling_size", 15)): vol.Coerce(int),
-            vol.Required("ema_smoothing_window", default=self.config_entry.options.get("ema_smoothing_window", 300)): vol.Coerce(int),
-        })
+        data_schema = {
+            "lowpass_time_constant": selector({
+                "number": {
+                    "min": 1,
+                    "max": 60,
+                    "unit_of_measurement": "s",
+                    "mode": "box",
+                    "step": 1
+                }
+            }),
+            "median_sampling_size": selector({
+                "number": {
+                    "min": 1,
+                    "max": 60,
+                    "unit_of_measurement": "samples",
+                    "mode": "box",
+                    "step": 1
+                }
+            }),
+            "ema_smoothing_window": selector({
+                "number": {
+                    "min": 60,
+                    "max": 3600,
+                    "unit_of_measurement": "s",
+                    "mode": "box",
+                    "step": 60
+                }
+            })
+        }
 
         return self.async_show_form(
             step_id="init",
-            data_schema=schema
+            data_schema=self.add_defaults_to_schema(data_schema, self.config_entry.options)
         )
