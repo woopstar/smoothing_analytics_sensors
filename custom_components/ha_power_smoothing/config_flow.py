@@ -84,4 +84,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         })
 
         return self.async_show_form(
-            step​⬤
+            step_id="init",
+            data_schema=schema
+        )
