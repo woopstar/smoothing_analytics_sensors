@@ -1,6 +1,6 @@
 DOMAIN = "smoothing_analytics_sensors"
 NAME = "Smoothing Analytics Sensors"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 ICON = "mdi:flash"
 
 # Default values
