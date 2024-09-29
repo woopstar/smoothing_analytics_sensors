@@ -2,14 +2,14 @@ import logging
 
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, ICON, NAME, VERSION  # Import constants
+from .const import DOMAIN, ICON, NAME  # Import constants
 
 _LOGGER = logging.getLogger(__name__)
-
 
 class SmoothingAnalyticsEntity(Entity):
     """Base class for Smoothing Analytics Entity (Device)"""
 
+    # Define the attributes of the entity
     _attr_icon = ICON
     _attr_has_entity_name = True
 
@@ -30,11 +30,11 @@ class SmoothingAnalyticsEntity(Entity):
         if not self.config_entry:
             _LOGGER.warning("Config entry is missing for this entity.")
             return None
+
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
             "name": self.config_entry.data.get(
                 "device_name", "Smoothing Analytics Device"
             ),
-            "model": VERSION,
             "manufacturer": NAME,
         }

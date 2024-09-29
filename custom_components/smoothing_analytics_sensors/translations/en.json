@@ -1,36 +1,36 @@
 {
-    "config": {
-      "step": {
-        "user": {
-          "title": "Configure Smoothing Analytics Device",
-          "description": "Set up the device for smoothing analytics sensors.",
-          "data": {
-            "input_sensor": "Input Sensor",
-            "lowpass_time_constant": "Lowpass Time Constant (seconds)",
-            "median_sampling_size": "Median Sampling Size (samples)",
-            "ema_smoothing_window": "EMA Smoothing Window (seconds)",
-            "device_name": "Name",
-            "update_interval": "Update Interval (seconds)"
-          }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Smoothing Analytics Device",
+        "description": "Set up the device for smoothing analytics sensors.",
+        "data": {
+          "input_sensor": "Input Sensor",
+          "lowpass_time_constant": "Lowpass Time Constant (seconds)",
+          "median_sampling_size": "Median Sampling Size (samples)",
+          "ema_smoothing_window": "EMA Smoothing Window (seconds)",
+          "device_name": "Name",
+          "update_interval": "Update Interval (seconds)"
         }
-      },
-      "error": {
-        "invalid_sensor": "Invalid input sensor. Please choose a valid sensor."
       }
     },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Update Smoothing Analytics Device Settings",
-          "description": "Update the device settings for smoothing analytics sensors.",
-          "data": {
-            "device_name": "Name",
-            "lowpass_time_constant": "Lowpass Time Constant (seconds)",
-            "median_sampling_size": "Median Sampling Size (samples)",
-            "ema_smoothing_window": "EMA Smoothing Window (seconds)",
-            "update_interval": "Update Interval (seconds)"
-          }
+    "error": {
+      "invalid_sensor": "Invalid input sensor. Please choose a valid sensor."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Smoothing Analytics Device Settings",
+        "description": "Update the device settings for smoothing analytics sensors.",
+        "data": {
+          "device_name": "Name",
+          "lowpass_time_constant": "Lowpass Time Constant (seconds)",
+          "median_sampling_size": "Median Sampling Size (samples)",
+          "ema_smoothing_window": "EMA Smoothing Window (seconds)",
+          "update_interval": "Update Interval (seconds)"
         }
       }
     }
   }
+}

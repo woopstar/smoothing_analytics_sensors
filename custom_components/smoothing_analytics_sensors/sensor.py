@@ -18,6 +18,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
     config = config_entry.data
 
+    # Extract configuration parameters
     input_sensor = config.get("input_sensor")
     lowpass_time_constant = config.get("lowpass_time_constant", 15)
     median_sampling_size = config.get("median_sampling_size", 15)
@@ -27,7 +28,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # Generate a unique hash based on the input sensor
     sensor_hash = generate_md5_hash(input_sensor)
 
-    # Unique input IDs for median and EMA sensors
+    # Unique input IDs for median and EMA sensors for stacking purposes
     median_unique_id = f"sas_lowpass_{sensor_hash}"
     ema_unique_id = f"sas_median_{sensor_hash}"
 
@@ -55,6 +56,5 @@ async def async_unload_entry(hass, entry):
     """Handle unloading of an entry."""
     platform = hass.data[DOMAIN].get(entry.entry_id)
     if platform:
-        await platform.async_remove_entry(entry)
-        return True
+        return await platform.async_remove_entry(entry)
     return False

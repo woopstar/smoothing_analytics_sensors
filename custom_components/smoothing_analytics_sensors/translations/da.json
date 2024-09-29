@@ -1,36 +1,36 @@
 {
-    "config": {
-      "step": {
-        "user": {
-          "title": "Konfigurer Smoothing Analytics Enhed",
-          "description": "Opsæt enheden for smoothing analytics sensorer.",
-          "data": {
-            "input_sensor": "Input Sensor",
-            "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
-            "median_sampling_size": "Median Prøvestørrelse (størrelse)",
-            "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
-            "device_name": "Navn",
-            "update_interval": "Opdateringsinterval (sekunder)"
-          }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfigurer Smoothing Analytics Enhed",
+        "description": "Opsæt enheden for smoothing analytics sensorer.",
+        "data": {
+          "input_sensor": "Input Sensor",
+          "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
+          "median_sampling_size": "Median Prøvestørrelse (størrelse)",
+          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
+          "device_name": "Navn",
+          "update_interval": "Opdateringsinterval (sekunder)"
         }
-      },
-      "error": {
-        "invalid_sensor": "Ugyldig input sensor. Vælg venligst en gyldig sensor."
       }
     },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Opdater Smoothing Analytics Enhedsindstillinger",
-          "description": "Opdater enhedsindstillingerne for smoothing analytics sensorer.",
-          "data": {
-            "device_name": "Navn",
-            "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
-            "median_sampling_size": "Median Prøvestørrelse (størrelse)",
-            "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
-            "update_interval": "Opdateringsinterval (sekunder)"
-          }
+    "error": {
+      "invalid_sensor": "Ugyldig input sensor. Vælg venligst en gyldig sensor."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opdater Smoothing Analytics Enhedsindstillinger",
+        "description": "Opdater enhedsindstillingerne for smoothing analytics sensorer.",
+        "data": {
+          "device_name": "Navn",
+          "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
+          "median_sampling_size": "Median Prøvestørrelse (størrelse)",
+          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
+          "update_interval": "Opdateringsinterval (sekunder)"
         }
       }
     }
   }
+}

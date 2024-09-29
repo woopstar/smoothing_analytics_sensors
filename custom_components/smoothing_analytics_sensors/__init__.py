@@ -6,9 +6,7 @@ from .const import DOMAIN
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Smoothing Analytics Sensors from a config entry."""
-    # Vent korrekt på opsætningen af platformen
-    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    return True
+    return await hass.config_entries.async_forward_entry_setup(entry, "sensor")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

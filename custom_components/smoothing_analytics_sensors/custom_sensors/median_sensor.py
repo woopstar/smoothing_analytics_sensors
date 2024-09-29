@@ -5,7 +5,7 @@ from datetime import datetime
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DOMAIN, ICON, NAME, VERSION
+from ..const import DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Median filtered sensor with persistent state and device support, based on unique_id."""
 
+    # Define the attributes of the entity
     _attr_icon = ICON
     _attr_has_entity_name = True
 
@@ -53,27 +54,20 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         return self._device_class
 
     @property
-    def device_info(self):
-        """Return device information for the Median Sensor."""
-        return {
-            "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get(
-                "device_name", "Smoothing Analytics Device"
-            ),
-            "model": VERSION,
-            "manufacturer": NAME,
-        }
-
-    @property
     def extra_state_attributes(self):
         """Return the state attributes."""
+
+        # Calculate the time since the last update
         time_since_last_update = None
         if self._last_update_time:
             time_since_last_update = (
                 datetime.now() - self._last_update_time
             ).total_seconds()
 
+        # Calculate the number of data points
         data_points_count = len(self._data_points)
+
+        # Calculate the number of missing data points
         missing_data_points = max(0, self._sampling_size - data_points_count)
 
         return {
@@ -104,6 +98,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found.")
             return
 
+        # Fetch the current value from the input sensor
         input_state = self.hass.states.get(self._input_entity_id)
         if input_state is None or input_state.state is None:
             _LOGGER.warning(
@@ -111,7 +106,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             )
             return
         try:
-            current_value = float(input_state.state)
+            input_value = float(input_state.state)
         except ValueError:
             _LOGGER.error(
                 f"Invalid value from {self._input_entity_id}: {input_state.state}"
@@ -123,7 +118,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._device_class = input_state.attributes.get("device_class")
 
         # Append the current value to the list of data points
-        self._data_points.append(current_value)
+        self._data_points.append(input_value)
 
         # Ensure we only keep the last `sampling_size` data points
         if len(self._data_points) > self._sampling_size:
@@ -137,7 +132,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Log the data points for debugging purposes
         _LOGGER.debug(
             f"Updated MedianSensor with input_entity_id: {self._input_entity_id}, "
-            f"current_value: {current_value}, data_points: {self._data_points}"
+            f"input_value: {input_value}, data_points: {self._data_points}"
         )
 
         # Update count and last update time
@@ -146,9 +141,14 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
+
+        # Resolve the entity_id from the unique_id
         registry = er.async_get(self.hass)
+
+        # Fetch the entity_id from the unique_id
         entry = registry.async_get_entity_id("sensor", DOMAIN, self._input_unique_id)
 
+        # Log the resolved entity_id for debugging purposes
         if entry:
             self._input_entity_id = entry
 
@@ -162,6 +162,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
+
         # Restore the previous state from persistent storage
         old_state = await self.async_get_last_state()
 

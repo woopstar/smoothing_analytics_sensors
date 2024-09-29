@@ -25,18 +25,19 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         self._errors = {}
 
+        # If user_input is not None, the user has submitted the form
         if user_input is not None:
-            # Validér input_sensor og andre nødvendige felter
+            # Validate input_sensor and other necessary fields
             if not user_input.get("input_sensor"):
                 self._errors["input_sensor"] = "required"
             else:
-                # Opret konfigurationen med device_name som titel
+                # Create the configuration with device_name as title
                 return self.async_create_entry(
                     title=user_input.get("device_name", "Smoothing Analytics Device"),
                     data=user_input,
                 )
 
-        # Brug Home Assistant selectors for at få input med default værdier
+        # Define the form schema
         data_schema = vol.Schema(
             {
                 vol.Required("input_sensor"): selector(
@@ -44,7 +45,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Optional(
                     "device_name", default="Smoothing Analytics Device"
-                ): str,  # Device Name felt
+                ): str,
                 vol.Optional(
                     "lowpass_time_constant", default=DEFAULT_LOW_PASS
                 ): selector(
@@ -96,6 +97,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
+        # Show the form to the user
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=self._errors
         )
@@ -117,13 +119,13 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Handle options step."""
         if user_input is not None:
-            # Opdatering af enhedens navn i options flow
+            # Update the device name in options flow
             return self.async_create_entry(
                 title=user_input.get("device_name", self.config_entry.title),
                 data=user_input,
             )
 
-        # Brug af default værdier fra options og translations
+        # Use default values from options and translations
         data_schema = vol.Schema(
             {
                 vol.Optional(
