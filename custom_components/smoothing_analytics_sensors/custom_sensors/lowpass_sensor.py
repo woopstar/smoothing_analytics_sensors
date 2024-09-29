@@ -3,7 +3,7 @@ from datetime import datetime
 
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DOMAIN, ICON, NAME, DEFAULT_LOW_PASS, DEFAULT_UPDATE_INTERVAL
+from ..const import DEFAULT_LOW_PASS, DEFAULT_UPDATE_INTERVAL, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,12 +42,17 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
-        self._time_constant = self._config_entry.options.get('lowpass_time_constant', DEFAULT_LOW_PASS)
-        self._update_interval = self._config_entry.options.get('update_interval', DEFAULT_UPDATE_INTERVAL)
+        self._time_constant = self._config_entry.options.get(
+            "lowpass_time_constant", DEFAULT_LOW_PASS
+        )
+        self._update_interval = self._config_entry.options.get(
+            "update_interval", DEFAULT_UPDATE_INTERVAL
+        )
 
         # Log updated settings
-        _LOGGER.debug(f"Updated Lowpass settings: time_constant={self._time_constant}, update_interval={self._update_interval}")
-
+        _LOGGER.debug(
+            f"Updated Lowpass settings: time_constant={self._time_constant}, update_interval={self._update_interval}"
+        )
 
     @property
     def name(self):
@@ -131,7 +136,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         )
 
         # Log detailed information about the update
-        _LOGGER.debug(f"Input value: {input_value}, Previous lowpass value: {self._previous_value}")
+        _LOGGER.debug(
+            f"Input value: {input_value}, Previous lowpass value: {self._previous_value}"
+        )
         _LOGGER.debug(f"New lowpass value: {self._state}")
 
         # Update the previous lowpass value to the new lowpass value

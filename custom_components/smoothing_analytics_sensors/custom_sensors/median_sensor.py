@@ -5,7 +5,7 @@ from datetime import datetime
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DOMAIN, ICON, NAME, DEFAULT_MEDIAN_SIZE
+from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,7 +36,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
-        self._sampling_size = self._config_entry.options.get('median_sampling_size', DEFAULT_MEDIAN_SIZE)
+        self._sampling_size = self._config_entry.options.get(
+            "median_sampling_size", DEFAULT_MEDIAN_SIZE
+        )
 
         # Log updated settings
         _LOGGER.debug(f"Updated Median settings: sampling_size={self._sampling_size}")

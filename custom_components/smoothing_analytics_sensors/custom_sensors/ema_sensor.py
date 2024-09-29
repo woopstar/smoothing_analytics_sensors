@@ -4,7 +4,7 @@ from datetime import datetime
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DOMAIN, ICON, NAME, DEFAULT_EMA_WINDOW
+from ..const import DEFAULT_EMA_WINDOW, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,11 +48,15 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry."""
-        self._smoothing_window = self._config_entry.options.get('ema_smoothing_window', DEFAULT_EMA_WINDOW)
+        self._smoothing_window = self._config_entry.options.get(
+            "ema_smoothing_window", DEFAULT_EMA_WINDOW
+        )
         self._alpha = calculate_alpha(self._smoothing_window)
 
         # Log updated settings
-        _LOGGER.debug(f"Updated EMA settings: smoothing_window={self._smoothing_window}, alpha={self._alpha}")
+        _LOGGER.debug(
+            f"Updated EMA settings: smoothing_window={self._smoothing_window}, alpha={self._alpha}"
+        )
 
     @property
     def name(self):
@@ -141,7 +145,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         )
 
         # Log detailed information about the update
-        _LOGGER.debug(f"Input value: {input_value}, Previous EMA value: {self._previous_value}, Alpha: {self._alpha}")
+        _LOGGER.debug(
+            f"Input value: {input_value}, Previous EMA value: {self._previous_value}, Alpha: {self._alpha}"
+        )
         _LOGGER.debug(f"New EMA value: {self._state}")
 
         # Update the previous EMA value to the new EMA value
