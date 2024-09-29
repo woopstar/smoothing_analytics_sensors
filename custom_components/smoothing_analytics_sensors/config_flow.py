@@ -43,9 +43,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("input_sensor"): selector(
                     {"entity": {"domain": "sensor"}}
                 ),
-                vol.Optional(
-                    "device_name", default="Smoothing Analytics Device"
-                ): str,
+                vol.Optional("device_name", default="Smoothing Analytics Device"): str,
                 vol.Optional(
                     "lowpass_time_constant", default=DEFAULT_LOW_PASS
                 ): selector(

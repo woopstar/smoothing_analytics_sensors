@@ -6,6 +6,7 @@ from .const import DOMAIN, ICON, NAME  # Import constants
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class SmoothingAnalyticsEntity(Entity):
     """Base class for Smoothing Analytics Entity (Device)"""
 

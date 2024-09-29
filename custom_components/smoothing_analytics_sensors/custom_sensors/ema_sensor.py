@@ -9,6 +9,7 @@ from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def calculate_alpha(smoothing_window):
     """Calculate alpha for Exponential Moving Average (EMA)"""
     return 2 / (smoothing_window + 1)
