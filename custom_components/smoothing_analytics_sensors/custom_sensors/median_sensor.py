@@ -142,6 +142,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         if len(self._data_points) >= self._sampling_size:
             self._state = round(statistics.median(self._data_points), 2)
             self._last_updated = now.isoformat()
+            self._last_update_time = now
 
         # Log the data points for debugging purposes
         _LOGGER.debug(
@@ -151,7 +152,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Update count and last update time
         self._update_count += 1
-        self._last_update_time = now
 
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
