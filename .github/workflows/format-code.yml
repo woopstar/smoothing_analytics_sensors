@@ -3,7 +3,6 @@ name: Format code
 on:
   push:
     branches:
-      - master
       - main
 
 jobs:
