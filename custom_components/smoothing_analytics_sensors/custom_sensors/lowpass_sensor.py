@@ -35,6 +35,8 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._last_update_time = None
         self._last_updated = None
         self._update_interval = update_interval
+        self._unit_of_measurement = None
+        self._device_class = None
         self._unique_id = f"sas_lowpass_{sensor_hash}"
 
     @property
@@ -48,6 +50,14 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def unit_of_measurement(self):
+        return self._unit_of_measurement
+
+    @property
+    def device_class(self):
+        return self._device_class
 
     @property
     def device_info(self):
@@ -100,10 +110,15 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         except ValueError:
             return
 
+        # Fetch unit_of_measurement and device_class from the input sensor
+        self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
+        self._device_class = input_state.attributes.get("device_class")
+
         # Apply lowpass filter
         self._state = round(
             lowpass_filter(current_value, self._previous_value, self._time_constant), 2
         )
+
         self._previous_value = current_value
         self._last_updated = now.isoformat()
 
