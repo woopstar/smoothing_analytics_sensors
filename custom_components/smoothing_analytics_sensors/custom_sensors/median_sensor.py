@@ -134,12 +134,11 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
         self._device_class = input_state.attributes.get("device_class")
 
-        # Append the current value to the list of data points
-        self._data_points.append(input_value)
+        # Add the input value to the data points in the beginning
+        self._data_points.insert(0, input_value)
 
         # Ensure we only keep the last `sampling_size` data points, trim if needed
-        excess_points = len(self._data_points) - self._sampling_size
-        if excess_points > 0:
+        if len(self._data_points) - self._sampling_size > 0:
             self._data_points = self._data_points[self._sampling_size:]
         else:
             _LOGGER.error(f"Invalid calculation for excess_points: {excess_points}")
