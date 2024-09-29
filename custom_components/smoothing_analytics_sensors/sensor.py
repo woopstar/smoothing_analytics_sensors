@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-from .const import DOMAIN
+from .const import DOMAIN,DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DEFAULT_EMA_WINDOW
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
@@ -13,6 +13,9 @@ def generate_md5_hash(input_sensor):
     """Generate an MD5 hash based on the input sensor's name."""
     return hashlib.md5(input_sensor.encode("utf-8")).hexdigest()
 
+def get_config_value(config_entry, key, default_value):
+    """Get the configuration value from options or fall back to the initial data."""
+    return config_entry.options.get(key, config_entry.data.get(key, default_value))
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
@@ -20,10 +23,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Extract configuration parameters
     input_sensor = config.get("input_sensor")
-    lowpass_time_constant = config.get("lowpass_time_constant", 15)
-    median_sampling_size = config.get("median_sampling_size", 15)
-    ema_smoothing_window = config.get("ema_smoothing_window", 300)
-    update_interval = config.get("update_interval", 1)
+    lowpass_time_constant = get_config_value(config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS)
+    median_sampling_size = get_config_value(config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE)
+    ema_smoothing_window = get_config_value(config_entry, "ema_smoothing_window", DEFAULT_EMA_WINDOW)
 
     # Generate a unique hash based on the input sensor
     sensor_hash = generate_md5_hash(input_sensor)
@@ -34,7 +36,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Create the lowpass, median, and ema sensors using the unique IDs
     lowpass_sensor = LowpassSensor(
-        input_sensor, lowpass_time_constant, sensor_hash, config_entry, update_interval
+        input_sensor, lowpass_time_constant, sensor_hash, config_entry
     )
     median_sensor = MedianSensor(
         median_unique_id, median_sampling_size, sensor_hash, config_entry

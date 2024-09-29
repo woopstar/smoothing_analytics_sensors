@@ -15,9 +15,9 @@ def calculate_alpha(smoothing_window):
     return 2 / (smoothing_window + 1)
 
 
-def ema_filter(input_value, previous_value, alpha):
+def ema_filter(value, previous_value, alpha):
     """Apply Exponential Moving Average (EMA) filter using the given alpha"""
-    return alpha * input_value + (1 - alpha) * previous_value
+    return alpha * value + (1 - alpha) * previous_value
 
 
 class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
@@ -33,15 +33,17 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._smoothing_window = smoothing_window
         self._sensor_hash = sensor_hash
         self._state = None
-        self._previous_value = 0
+        self._previous_value = None
         self._last_updated = None
         self._update_count = 0
-        self._last_update_time = None
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_ema_{sensor_hash}"
+
+        # If options flow is used to change the sampling size, it will override
+        self._update_settings()
 
         # Calculate alpha once and store it
         self._alpha = calculate_alpha(self._smoothing_window)
@@ -82,13 +84,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        # Calculate the time since the last update
-        time_since_last_update = None
-        if self._last_update_time:
-            time_since_last_update = (
-                datetime.now() - self._last_update_time
-            ).total_seconds()
-
         return {
             "ema_smoothing_window": self._smoothing_window,
             "input_unique_id": self._input_unique_id,
@@ -97,7 +92,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "sensor_hash": self._sensor_hash,
             "last_updated": self._last_updated,
             "update_count": self._update_count,
-            "time_since_last_update": time_since_last_update,
             "previous_value": self._previous_value,
             "alpha": self._alpha,
         }
@@ -139,26 +133,20 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
         self._device_class = input_state.attributes.get("device_class")
 
-        # Apply EMA filter using pre-calculated alpha
-        self._state = round(
-            ema_filter(input_value, self._previous_value, self._alpha), 2
-        )
-
-        # Log detailed information about the update
-        _LOGGER.debug(
-            f"Input value: {input_value}, Previous EMA value: {self._previous_value}, Alpha: {self._alpha}"
-        )
-        _LOGGER.debug(f"New EMA value: {self._state}")
-
         # Update the previous EMA value to the new EMA value
         self._previous_value = self._state
 
-        # Update the last updated time
-        self._last_updated = now.isoformat()
+        # Apply EMA filter using pre-calculated alpha
+        if self._previous_value is not None:
+            self._state = round(
+                ema_filter(input_value, self._previous_value, self._alpha), 2
+            )
+        else:
+            self._state = input_value
 
         # Update count and last update time
+        self._last_updated = now.isoformat()
         self._update_count += 1
-        self._last_update_time = now
 
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
@@ -198,7 +186,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
                     f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
                 )
                 self._state = None
-                self._previous_value = 0
+                self._previous_value = None
+
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:

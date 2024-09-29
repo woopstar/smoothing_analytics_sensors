@@ -1,0 +1,507 @@
+diff --git a/custom_components/smoothing_analytics_sensors/config_flow.py b/custom_components/smoothing_analytics_sensors/config_flow.py
+index 558d2f2..aef8e31 100644
+--- a/custom_components/smoothing_analytics_sensors/config_flow.py
++++ b/custom_components/smoothing_analytics_sensors/config_flow.py
+@@ -9,7 +9,6 @@ from .const import (
+     DEFAULT_EMA_WINDOW,
+     DEFAULT_LOW_PASS,
+     DEFAULT_MEDIAN_SIZE,
+-    DEFAULT_UPDATE_INTERVAL,
+     DOMAIN,
+ )
+ 
+@@ -80,18 +79,6 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+                         }
+                     }
+                 ),
+-                vol.Optional(
+-                    "update_interval", default=DEFAULT_UPDATE_INTERVAL
+-                ): selector(
+-                    {
+-                        "number": {
+-                            "min": 1,
+-                            "max": 60,
+-                            "unit_of_measurement": "seconds",
+-                            "mode": "box",
+-                        }
+-                    }
+-                ),
+             }
+         )
+ 
+@@ -177,21 +164,6 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
+                         }
+                     }
+                 ),
+-                vol.Optional(
+-                    "update_interval",
+-                    default=self.config_entry.options.get(
+-                        "update_interval", DEFAULT_UPDATE_INTERVAL
+-                    ),
+-                ): selector(
+-                    {
+-                        "number": {
+-                            "min": 1,
+-                            "max": 60,
+-                            "unit_of_measurement": "seconds",
+-                            "mode": "box",
+-                        }
+-                    }
+-                ),
+             }
+         )
+ 
+diff --git a/custom_components/smoothing_analytics_sensors/const.py b/custom_components/smoothing_analytics_sensors/const.py
+index 28f6ce8..af5cb97 100644
+--- a/custom_components/smoothing_analytics_sensors/const.py
++++ b/custom_components/smoothing_analytics_sensors/const.py
+@@ -6,4 +6,3 @@ ICON = "mdi:flash"
+ DEFAULT_LOW_PASS = 15
+ DEFAULT_MEDIAN_SIZE = 15
+ DEFAULT_EMA_WINDOW = 300
+-DEFAULT_UPDATE_INTERVAL = 1
+diff --git a/custom_components/smoothing_analytics_sensors/custom_sensors/ema_sensor.py b/custom_components/smoothing_analytics_sensors/custom_sensors/ema_sensor.py
+index f690e6e..1aadba1 100644
+--- a/custom_components/smoothing_analytics_sensors/custom_sensors/ema_sensor.py
++++ b/custom_components/smoothing_analytics_sensors/custom_sensors/ema_sensor.py
+@@ -15,9 +15,9 @@ def calculate_alpha(smoothing_window):
+     return 2 / (smoothing_window + 1)
+ 
+ 
+-def ema_filter(input_value, previous_value, alpha):
++def ema_filter(value, previous_value, alpha):
+     """Apply Exponential Moving Average (EMA) filter using the given alpha"""
+-    return alpha * input_value + (1 - alpha) * previous_value
++    return alpha * value + (1 - alpha) * previous_value
+ 
+ 
+ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+@@ -33,16 +33,18 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+         self._smoothing_window = smoothing_window
+         self._sensor_hash = sensor_hash
+         self._state = None
+-        self._previous_value = 0
++        self._previous_value = None
+         self._last_updated = None
+         self._update_count = 0
+-        self._last_update_time = None
+         self._input_entity_id = None
+         self._unit_of_measurement = None
+         self._device_class = None
+         self._config_entry = config_entry
+         self._unique_id = f"sas_ema_{sensor_hash}"
+ 
++        # If options flow is used to change the sampling size, it will override
++        self._update_settings()
++
+         # Calculate alpha once and store it
+         self._alpha = calculate_alpha(self._smoothing_window)
+ 
+@@ -82,13 +84,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+     def extra_state_attributes(self):
+         """Return the state attributes."""
+ 
+-        # Calculate the time since the last update
+-        time_since_last_update = None
+-        if self._last_update_time:
+-            time_since_last_update = (
+-                datetime.now() - self._last_update_time
+-            ).total_seconds()
+-
+         return {
+             "ema_smoothing_window": self._smoothing_window,
+             "input_unique_id": self._input_unique_id,
+@@ -97,7 +92,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+             "sensor_hash": self._sensor_hash,
+             "last_updated": self._last_updated,
+             "update_count": self._update_count,
+-            "time_since_last_update": time_since_last_update,
+             "previous_value": self._previous_value,
+             "alpha": self._alpha,
+         }
+@@ -139,26 +133,20 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
+         self._device_class = input_state.attributes.get("device_class")
+ 
+-        # Apply EMA filter using pre-calculated alpha
+-        self._state = round(
+-            ema_filter(input_value, self._previous_value, self._alpha), 2
+-        )
+-
+-        # Log detailed information about the update
+-        _LOGGER.debug(
+-            f"Input value: {input_value}, Previous EMA value: {self._previous_value}, Alpha: {self._alpha}"
+-        )
+-        _LOGGER.debug(f"New EMA value: {self._state}")
+-
+         # Update the previous EMA value to the new EMA value
+         self._previous_value = self._state
+ 
+-        # Update the last updated time
+-        self._last_updated = now.isoformat()
++        # Apply EMA filter using pre-calculated alpha
++        if self._previous_value is not None:
++            self._state = round(
++                ema_filter(input_value, self._previous_value, self._alpha), 2
++            )
++        else:
++            self._state = input_value
+ 
+         # Update count and last update time
++        self._last_updated = now.isoformat()
+         self._update_count += 1
+-        self._last_update_time = now
+ 
+     async def _resolve_input_entity_id(self):
+         """Resolve the entity_id from the unique_id using entity_registry."""
+@@ -198,7 +186,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+                     f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
+                 )
+                 self._state = None
+-                self._previous_value = 0
++                self._previous_value = None
++
+             self._last_updated = old_state.attributes.get("last_updated", None)
+             self._update_count = old_state.attributes.get("update_count", 0)
+         else:
+diff --git a/custom_components/smoothing_analytics_sensors/custom_sensors/lowpass_sensor.py b/custom_components/smoothing_analytics_sensors/custom_sensors/lowpass_sensor.py
+index 3eb45e8..db6f2bc 100644
+--- a/custom_components/smoothing_analytics_sensors/custom_sensors/lowpass_sensor.py
++++ b/custom_components/smoothing_analytics_sensors/custom_sensors/lowpass_sensor.py
+@@ -3,7 +3,7 @@ from datetime import datetime
+ 
+ from homeassistant.helpers.restore_state import RestoreEntity
+ 
+-from ..const import DEFAULT_LOW_PASS, DEFAULT_UPDATE_INTERVAL, DOMAIN, ICON, NAME
++from ..const import DEFAULT_LOW_PASS, DOMAIN, ICON, NAME
+ from ..entity import SmoothingAnalyticsEntity
+ 
+ _LOGGER = logging.getLogger(__name__)
+@@ -23,35 +23,32 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+     _attr_has_entity_name = True
+ 
+     def __init__(
+-        self, input_sensor, time_constant, sensor_hash, config_entry, update_interval
+-    ):
++        self, input_sensor, time_constant, sensor_hash, config_entry):
+         super().__init__(config_entry)
+         self._input_sensor = input_sensor
+         self._time_constant = time_constant
+         self._sensor_hash = sensor_hash
+         self._state = None
+-        self._previous_value = 0
++        self._previous_value = None
+         self._update_count = 0
+-        self._last_update_time = None
+         self._last_updated = None
+-        self._update_interval = update_interval
+         self._unit_of_measurement = None
+         self._device_class = None
+         self._config_entry = config_entry
+         self._unique_id = f"sas_lowpass_{sensor_hash}"
+ 
++        # If options flow is used to change the sampling size, it will override
++        self._update_settings()
++
+     def _update_settings(self):
+         """Fetch updated settings from config_entry options."""
+         self._time_constant = self._config_entry.options.get(
+             "lowpass_time_constant", DEFAULT_LOW_PASS
+         )
+-        self._update_interval = self._config_entry.options.get(
+-            "update_interval", DEFAULT_UPDATE_INTERVAL
+-        )
+ 
+         # Log updated settings
+         _LOGGER.debug(
+-            f"Updated Lowpass settings: time_constant={self._time_constant}, update_interval={self._update_interval}"
++            f"Updated Lowpass settings: time_constant={self._time_constant}"
+         )
+ 
+     @property
+@@ -78,13 +75,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+     def extra_state_attributes(self):
+         """Return the state attributes."""
+ 
+-        # Calculate the time since the last update
+-        time_since_last_update = None
+-        if self._last_update_time:
+-            time_since_last_update = (
+-                datetime.now() - self._last_update_time
+-            ).total_seconds()
+-
+         return {
+             "lowpass_time_constant": self._time_constant,
+             "input_sensor": self._input_sensor,
+@@ -92,9 +82,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+             "sensor_hash": self._sensor_hash,
+             "last_updated": self._last_updated,
+             "update_count": self._update_count,
+-            "time_since_last_update": time_since_last_update,
+             "previous_value": self._previous_value,
+-            "update_interval": self._update_interval,
+         }
+ 
+     async def async_update(self):
+@@ -106,13 +94,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+         # Get the current time
+         now = datetime.now()
+ 
+-        # Check if enough time has passed since the last update based on the update interval
+-        if (
+-            self._last_update_time
+-            and (now - self._last_update_time).total_seconds() < self._update_interval
+-        ):
+-            return  # Skip the update if the interval hasn't passed
+-
+         # Fetch the current value from the input sensor
+         input_state = self.hass.states.get(self._input_sensor)
+         if input_state is None:
+@@ -130,26 +111,20 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
+         self._device_class = input_state.attributes.get("device_class")
+ 
+-        # Apply lowpass filter
+-        self._state = round(
+-            lowpass_filter(input_value, self._previous_value, self._time_constant), 2
+-        )
+-
+-        # Log detailed information about the update
+-        _LOGGER.debug(
+-            f"Input value: {input_value}, Previous lowpass value: {self._previous_value}"
+-        )
+-        _LOGGER.debug(f"New lowpass value: {self._state}")
+-
+         # Update the previous lowpass value to the new lowpass value
+         self._previous_value = self._state
+ 
+-        # Update the last updated time
+-        self._last_updated = now.isoformat()
++        # Apply lowpass filter when we have a previous value
++        if self._previous_value is not None:
++            self._state = round(
++                lowpass_filter(input_value, self._previous_value, self._time_constant), 2
++            )
++        else:
++            self._state = input_value
+ 
+         # Update count and last update time
+         self._update_count += 1
+-        self._last_update_time = now
++        self._last_updated = now.isoformat()
+ 
+     async def async_added_to_hass(self):
+         """Handle the sensor being added to Home Assistant."""
+@@ -166,7 +141,8 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+                     f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
+                 )
+                 self._state = None
+-                self._previous_value = 0
++                self._previous_value = None
++
+             self._last_updated = old_state.attributes.get("last_updated", None)
+             self._update_count = old_state.attributes.get("update_count", 0)
+         else:
+diff --git a/custom_components/smoothing_analytics_sensors/custom_sensors/median_sensor.py b/custom_components/smoothing_analytics_sensors/custom_sensors/median_sensor.py
+index 03c10c7..06b5868 100644
+--- a/custom_components/smoothing_analytics_sensors/custom_sensors/median_sensor.py
++++ b/custom_components/smoothing_analytics_sensors/custom_sensors/median_sensor.py
+@@ -21,18 +21,21 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
+     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
+         super().__init__(config_entry)
+         self._input_unique_id = input_unique_id
+-        self._sampling_size = sampling_size
++        #self._sampling_size = sampling_size
+         self._sensor_hash = sensor_hash
+         self._state = None
+         self._data_points = []
+         self._last_updated = None
+         self._update_count = 0
+-        self._last_update_time = None
+         self._input_entity_id = None
+         self._unit_of_measurement = None
+         self._device_class = None
+         self._config_entry = config_entry
+         self._unique_id = f"sas_median_{sensor_hash}"
++        self._sampling_size = sampling_size
++
++        # If options flow is used to change the sampling size, it will override
++        self._update_settings()
+ 
+     def _update_settings(self):
+         """Fetch updated settings from config_entry options."""
+@@ -67,16 +70,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
+     def extra_state_attributes(self):
+         """Return the state attributes."""
+ 
+-        # Calculate the time since the last update
+-        time_since_last_update = 0
+-        if self._last_update_time:
+-            try:
+-                # Calculate time difference
+-                time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
+-            except TypeError:
+-                _LOGGER.error("Error calculating time_since_last_update. Check if _last_update_time is set correctly.")
+-                time_since_last_update = 0
+-
+         # Calculate the number of data points
+         data_points_count = len(self._data_points)
+ 
+@@ -91,7 +84,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
+             "sensor_hash": self._sensor_hash,
+             "last_updated": self._last_updated,
+             "update_count": self._update_count,
+-            "time_since_last_update": time_since_last_update,
+             "data_points_count": data_points_count,
+             "missing_data_points": missing_data_points,
+             "data_points": self._data_points,
+@@ -134,28 +126,27 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
+         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
+         self._device_class = input_state.attributes.get("device_class")
+ 
+-        # Add the input value to the data points in the beginning
+-        self._data_points.insert(0, input_value)
+-
+-        # Ensure we only keep the last `sampling_size` data points, trim if needed
+-        if len(self._data_points) - self._sampling_size > 0:
+-            self._data_points = self._data_points[self._sampling_size:]
++        # Append the current value to the list of data points
++        if len(self._data_points) > 0:
++            new_data_points = self._data_points.copy()
+         else:
+-            _LOGGER.error(f"Invalid calculation for excess_points: {excess_points}")
++            new_data_points = []
++
++        new_data_points.append(input_value)
+ 
+         # Calculate the median if we have enough data points
+-        if len(self._data_points) >= self._sampling_size:
+-            self._state = round(statistics.median(self._data_points), 2)
+-            self._last_updated = now.isoformat()
+-            self._last_update_time = datetime.now()
+-
+-        # Log the data points for debugging purposes
+-        _LOGGER.debug(
+-            f"Updated MedianSensor with input_entity_id: {self._input_entity_id}, "
+-            f"input_value: {input_value}, data_points: {self._data_points}"
+-        )
++        if len(new_data_points) >= self._sampling_size:
++            self._state = round(statistics.median(new_data_points), 2)
++
++        # Ensure we only keep the last `sampling_size` data points, trim if needed
++        while len(new_data_points) > self._sampling_size:
++            new_data_points.pop(0)
++
++        # Update the data points
++        self._data_points = new_data_points
+ 
+         # Update count and last update time
++        self._last_updated = now.isoformat()
+         self._update_count += 1
+ 
+     async def _resolve_input_entity_id(self):
+@@ -197,9 +188,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
+                 )
+                 self._state = None
+                 self._data_points = []
++
+             self._last_updated = old_state.attributes.get("last_updated", None)
+             self._update_count = old_state.attributes.get("update_count", 0)
+-            self._last_update_time = old_state.attributes.get("last_update_time", 0)
+         else:
+             _LOGGER.info(
+                 f"No previous state found for {self._unique_id}, starting fresh."
+diff --git a/custom_components/smoothing_analytics_sensors/sensor.py b/custom_components/smoothing_analytics_sensors/sensor.py
+index f406dbb..1b738c6 100644
+--- a/custom_components/smoothing_analytics_sensors/sensor.py
++++ b/custom_components/smoothing_analytics_sensors/sensor.py
+@@ -1,7 +1,7 @@
+ import hashlib
+ import logging
+ 
+-from .const import DOMAIN
++from .const import DOMAIN,DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DEFAULT_EMA_WINDOW
+ from .custom_sensors.ema_sensor import EmaSensor
+ from .custom_sensors.lowpass_sensor import LowpassSensor
+ from .custom_sensors.median_sensor import MedianSensor
+@@ -13,6 +13,9 @@ def generate_md5_hash(input_sensor):
+     """Generate an MD5 hash based on the input sensor's name."""
+     return hashlib.md5(input_sensor.encode("utf-8")).hexdigest()
+ 
++def get_config_value(config_entry, key, default_value):
++    """Get the configuration value from options or fall back to the initial data."""
++    return config_entry.options.get(key, config_entry.data.get(key, default_value))
+ 
+ async def async_setup_entry(hass, config_entry, async_add_entities):
+     """Set up Smoothing Analytics sensors from a config entry."""
+@@ -20,10 +23,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
+ 
+     # Extract configuration parameters
+     input_sensor = config.get("input_sensor")
+-    lowpass_time_constant = config.get("lowpass_time_constant", 15)
+-    median_sampling_size = config.get("median_sampling_size", 15)
+-    ema_smoothing_window = config.get("ema_smoothing_window", 300)
+-    update_interval = config.get("update_interval", 1)
++    lowpass_time_constant = get_config_value(config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS)
++    median_sampling_size = get_config_value(config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE)
++    ema_smoothing_window = get_config_value(config_entry, "ema_smoothing_window", DEFAULT_EMA_WINDOW)
+ 
+     # Generate a unique hash based on the input sensor
+     sensor_hash = generate_md5_hash(input_sensor)
+@@ -34,7 +36,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
+ 
+     # Create the lowpass, median, and ema sensors using the unique IDs
+     lowpass_sensor = LowpassSensor(
+-        input_sensor, lowpass_time_constant, sensor_hash, config_entry, update_interval
++        input_sensor, lowpass_time_constant, sensor_hash, config_entry
+     )
+     median_sensor = MedianSensor(
+         median_unique_id, median_sampling_size, sensor_hash, config_entry
+diff --git a/custom_components/smoothing_analytics_sensors/translations/da.json b/custom_components/smoothing_analytics_sensors/translations/da.json
+index 3e3fada..98eb421 100644
+--- a/custom_components/smoothing_analytics_sensors/translations/da.json
++++ b/custom_components/smoothing_analytics_sensors/translations/da.json
+@@ -9,8 +9,7 @@
+           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
+           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
+           "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
+-          "device_name": "Navn",
+-          "update_interval": "Opdateringsinterval (sekunder)"
++          "device_name": "Navn"
+         }
+       }
+     },
+@@ -27,8 +26,7 @@
+           "device_name": "Navn",
+           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
+           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
+-          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
+-          "update_interval": "Opdateringsinterval (sekunder)"
++          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)"
+         }
+       }
+     }
+diff --git a/custom_components/smoothing_analytics_sensors/translations/en.json b/custom_components/smoothing_analytics_sensors/translations/en.json
+index 31f5bc5..de34ffb 100644
+--- a/custom_components/smoothing_analytics_sensors/translations/en.json
++++ b/custom_components/smoothing_analytics_sensors/translations/en.json
+@@ -9,8 +9,7 @@
+           "lowpass_time_constant": "Lowpass Time Constant (seconds)",
+           "median_sampling_size": "Median Sampling Size (samples)",
+           "ema_smoothing_window": "EMA Smoothing Window (seconds)",
+-          "device_name": "Name",
+-          "update_interval": "Update Interval (seconds)"
++          "device_name": "Name"
+         }
+       }
+     },
+@@ -27,8 +26,7 @@
+           "device_name": "Name",
+           "lowpass_time_constant": "Lowpass Time Constant (seconds)",
+           "median_sampling_size": "Median Sampling Size (samples)",
+-          "ema_smoothing_window": "EMA Smoothing Window (seconds)",
+-          "update_interval": "Update Interval (seconds)"
++          "ema_smoothing_window": "EMA Smoothing Window (seconds)"
+         }
+       }
+     }

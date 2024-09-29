@@ -9,7 +9,6 @@ from .const import (
     DEFAULT_EMA_WINDOW,
     DEFAULT_LOW_PASS,
     DEFAULT_MEDIAN_SIZE,
-    DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
 )
 
@@ -75,18 +74,6 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "number": {
                             "min": 60,
                             "max": 3600,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "update_interval", default=DEFAULT_UPDATE_INTERVAL
-                ): selector(
-                    {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
                             "unit_of_measurement": "seconds",
                             "mode": "box",
                         }
@@ -172,21 +159,6 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
                         "number": {
                             "min": 60,
                             "max": 3600,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "update_interval",
-                    default=self.config_entry.options.get(
-                        "update_interval", DEFAULT_UPDATE_INTERVAL
-                    ),
-                ): selector(
-                    {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
                             "unit_of_measurement": "seconds",
                             "mode": "box",
                         }

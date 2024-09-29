@@ -21,18 +21,21 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_unique_id = input_unique_id
-        self._sampling_size = sampling_size
+        #self._sampling_size = sampling_size
         self._sensor_hash = sensor_hash
         self._state = None
         self._data_points = []
         self._last_updated = None
         self._update_count = 0
-        self._last_update_time = None
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_median_{sensor_hash}"
+        self._sampling_size = sampling_size
+
+        # If options flow is used to change the sampling size, it will override
+        self._update_settings()
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
@@ -67,16 +70,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        # Calculate the time since the last update
-        time_since_last_update = 0
-        if self._last_update_time:
-            try:
-                # Calculate time difference
-                time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
-            except TypeError:
-                _LOGGER.error("Error calculating time_since_last_update. Check if _last_update_time is set correctly.")
-                time_since_last_update = 0
-
         # Calculate the number of data points
         data_points_count = len(self._data_points)
 
@@ -91,7 +84,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "sensor_hash": self._sensor_hash,
             "last_updated": self._last_updated,
             "update_count": self._update_count,
-            "time_since_last_update": time_since_last_update,
             "data_points_count": data_points_count,
             "missing_data_points": missing_data_points,
             "data_points": self._data_points,
@@ -134,28 +126,27 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
         self._device_class = input_state.attributes.get("device_class")
 
-        # Add the input value to the data points in the beginning
-        self._data_points.insert(0, input_value)
-
-        # Ensure we only keep the last `sampling_size` data points, trim if needed
-        if len(self._data_points) - self._sampling_size > 0:
-            self._data_points = self._data_points[self._sampling_size:]
+        # Append the current value to the list of data points
+        if len(self._data_points) > 0:
+            new_data_points = self._data_points.copy()
         else:
-            _LOGGER.error(f"Invalid calculation for excess_points: {excess_points}")
+            new_data_points = []
+
+        new_data_points.append(input_value)
 
         # Calculate the median if we have enough data points
-        if len(self._data_points) >= self._sampling_size:
-            self._state = round(statistics.median(self._data_points), 2)
-            self._last_updated = now.isoformat()
-            self._last_update_time = datetime.now()
+        if len(new_data_points) >= self._sampling_size:
+            self._state = round(statistics.median(new_data_points), 2)
 
-        # Log the data points for debugging purposes
-        _LOGGER.debug(
-            f"Updated MedianSensor with input_entity_id: {self._input_entity_id}, "
-            f"input_value: {input_value}, data_points: {self._data_points}"
-        )
+        # Ensure we only keep the last `sampling_size` data points, trim if needed
+        while len(new_data_points) > self._sampling_size:
+            new_data_points.pop(0)
+
+        # Update the data points
+        self._data_points = new_data_points
 
         # Update count and last update time
+        self._last_updated = now.isoformat()
         self._update_count += 1
 
     async def _resolve_input_entity_id(self):
@@ -197,9 +188,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 )
                 self._state = None
                 self._data_points = []
+
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
-            self._last_update_time = old_state.attributes.get("last_update_time", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."

@@ -9,8 +9,7 @@
           "lowpass_time_constant": "Lowpass Time Constant (seconds)",
           "median_sampling_size": "Median Sampling Size (samples)",
           "ema_smoothing_window": "EMA Smoothing Window (seconds)",
-          "device_name": "Name",
-          "update_interval": "Update Interval (seconds)"
+          "device_name": "Name"
         }
       }
     },
@@ -27,8 +26,7 @@
           "device_name": "Name",
           "lowpass_time_constant": "Lowpass Time Constant (seconds)",
           "median_sampling_size": "Median Sampling Size (samples)",
-          "ema_smoothing_window": "EMA Smoothing Window (seconds)",
-          "update_interval": "Update Interval (seconds)"
+          "ema_smoothing_window": "EMA Smoothing Window (seconds)"
         }
       }
     }

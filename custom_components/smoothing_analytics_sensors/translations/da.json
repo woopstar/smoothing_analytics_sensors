@@ -9,8 +9,7 @@
           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
           "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
-          "device_name": "Navn",
-          "update_interval": "Opdateringsinterval (sekunder)"
+          "device_name": "Navn"
         }
       }
     },
@@ -27,8 +26,7 @@
           "device_name": "Navn",
           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
-          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
-          "update_interval": "Opdateringsinterval (sekunder)"
+          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)"
         }
       }
     }

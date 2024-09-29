@@ -3,7 +3,7 @@ from datetime import datetime
 
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DEFAULT_LOW_PASS, DEFAULT_UPDATE_INTERVAL, DOMAIN, ICON, NAME
+from ..const import DEFAULT_LOW_PASS, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,35 +23,32 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     _attr_has_entity_name = True
 
     def __init__(
-        self, input_sensor, time_constant, sensor_hash, config_entry, update_interval
-    ):
+        self, input_sensor, time_constant, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_sensor = input_sensor
         self._time_constant = time_constant
         self._sensor_hash = sensor_hash
         self._state = None
-        self._previous_value = 0
+        self._previous_value = None
         self._update_count = 0
-        self._last_update_time = None
         self._last_updated = None
-        self._update_interval = update_interval
         self._unit_of_measurement = None
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_lowpass_{sensor_hash}"
+
+        # If options flow is used to change the sampling size, it will override
+        self._update_settings()
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
         self._time_constant = self._config_entry.options.get(
             "lowpass_time_constant", DEFAULT_LOW_PASS
         )
-        self._update_interval = self._config_entry.options.get(
-            "update_interval", DEFAULT_UPDATE_INTERVAL
-        )
 
         # Log updated settings
         _LOGGER.debug(
-            f"Updated Lowpass settings: time_constant={self._time_constant}, update_interval={self._update_interval}"
+            f"Updated Lowpass settings: time_constant={self._time_constant}"
         )
 
     @property
@@ -78,13 +75,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        # Calculate the time since the last update
-        time_since_last_update = None
-        if self._last_update_time:
-            time_since_last_update = (
-                datetime.now() - self._last_update_time
-            ).total_seconds()
-
         return {
             "lowpass_time_constant": self._time_constant,
             "input_sensor": self._input_sensor,
@@ -92,9 +82,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "sensor_hash": self._sensor_hash,
             "last_updated": self._last_updated,
             "update_count": self._update_count,
-            "time_since_last_update": time_since_last_update,
             "previous_value": self._previous_value,
-            "update_interval": self._update_interval,
         }
 
     async def async_update(self):
@@ -105,13 +93,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Get the current time
         now = datetime.now()
-
-        # Check if enough time has passed since the last update based on the update interval
-        if (
-            self._last_update_time
-            and (now - self._last_update_time).total_seconds() < self._update_interval
-        ):
-            return  # Skip the update if the interval hasn't passed
 
         # Fetch the current value from the input sensor
         input_state = self.hass.states.get(self._input_sensor)
@@ -130,26 +111,20 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
         self._device_class = input_state.attributes.get("device_class")
 
-        # Apply lowpass filter
-        self._state = round(
-            lowpass_filter(input_value, self._previous_value, self._time_constant), 2
-        )
-
-        # Log detailed information about the update
-        _LOGGER.debug(
-            f"Input value: {input_value}, Previous lowpass value: {self._previous_value}"
-        )
-        _LOGGER.debug(f"New lowpass value: {self._state}")
-
         # Update the previous lowpass value to the new lowpass value
         self._previous_value = self._state
 
-        # Update the last updated time
-        self._last_updated = now.isoformat()
+        # Apply lowpass filter when we have a previous value
+        if self._previous_value is not None:
+            self._state = round(
+                lowpass_filter(input_value, self._previous_value, self._time_constant), 2
+            )
+        else:
+            self._state = input_value
 
         # Update count and last update time
         self._update_count += 1
-        self._last_update_time = now
+        self._last_updated = now.isoformat()
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
@@ -166,7 +141,8 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
                     f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
                 )
                 self._state = None
-                self._previous_value = 0
+                self._previous_value = None
+
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
