@@ -4,7 +4,7 @@ from datetime import datetime
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DOMAIN, ICON, NAME
+from ..const import DOMAIN, ICON, NAME, DEFAULT_EMA_WINDOW
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,10 +40,19 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
+        self._config_entry = config_entry
         self._unique_id = f"sas_ema_{sensor_hash}"
 
         # Calculate alpha once and store it
         self._alpha = calculate_alpha(self._smoothing_window)
+
+    def _update_settings(self):
+        """Fetch updated settings from config_entry."""
+        self._smoothing_window = self._config_entry.options.get('ema_smoothing_window', DEFAULT_EMA_WINDOW)
+        self._alpha = calculate_alpha(self._smoothing_window)
+
+        # Log updated settings
+        _LOGGER.debug(f"Updated EMA settings: smoothing_window={self._smoothing_window}, alpha={self._alpha}")
 
     @property
     def name(self):
@@ -92,6 +101,10 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     async def async_update(self):
         """Update the sensor state based on the input sensor's value."""
 
+        # Ensure settings are reloaded if config is changed.
+        self._update_settings()
+
+        # Get the current time
         now = datetime.now()
 
         # Check if the input_entity_id has been resolved from unique_id
