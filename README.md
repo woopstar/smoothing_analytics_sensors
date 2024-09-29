@@ -61,9 +61,9 @@ The final smoothing step applies an Exponential Moving Average to the median-fil
 - **Purpose**: Provides final smoothing while prioritizing recent data points.
 - **Smoothing Window**: 300 seconds (5 minutes).
 - **Alpha Calculation**:
-  \[
-  \alpha = \frac{2}{\text{smoothing\_window\_seconds} + 1}
-  \]
+  Alpha is calculated using the following formula:
+  `alpha = 2 / (smoothing_window_seconds + 1)`
+
 - **Rationale**: Ensures the sensor reacts slowly to spikes while capturing long-term trends.
 
 ## Installation
