@@ -11,5 +11,5 @@
     "documentation": "https://github.com/woopstar/smoothing_analytics_sensors/blob/main/README.md",
     "iot_class": "local_polling",
     "issue_tracker": "https://github.com/woopstar/smoothing_analytics_sensors/issues",
-    "version": "1.1.2"
+    "version": "1.1.3"
 }
