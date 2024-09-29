@@ -21,7 +21,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_unique_id = input_unique_id
-        #self._sampling_size = sampling_size
+        # self._sampling_size = sampling_size
         self._sensor_hash = sensor_hash
         self._state = None
         self._data_points = []

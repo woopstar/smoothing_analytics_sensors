@@ -5,12 +5,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
 
-from .const import (
-    DEFAULT_EMA_WINDOW,
-    DEFAULT_LOW_PASS,
-    DEFAULT_MEDIAN_SIZE,
-    DOMAIN,
-)
+from .const import DEFAULT_EMA_WINDOW, DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 

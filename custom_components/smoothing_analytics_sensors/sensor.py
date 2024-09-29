@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-from .const import DOMAIN,DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DEFAULT_EMA_WINDOW
+from .const import DEFAULT_EMA_WINDOW, DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DOMAIN
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
@@ -13,9 +13,11 @@ def generate_md5_hash(input_sensor):
     """Generate an MD5 hash based on the input sensor's name."""
     return hashlib.md5(input_sensor.encode("utf-8")).hexdigest()
 
+
 def get_config_value(config_entry, key, default_value):
     """Get the configuration value from options or fall back to the initial data."""
     return config_entry.options.get(key, config_entry.data.get(key, default_value))
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
@@ -23,9 +25,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Extract configuration parameters
     input_sensor = config.get("input_sensor")
-    lowpass_time_constant = get_config_value(config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS)
-    median_sampling_size = get_config_value(config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE)
-    ema_smoothing_window = get_config_value(config_entry, "ema_smoothing_window", DEFAULT_EMA_WINDOW)
+    lowpass_time_constant = get_config_value(
+        config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS
+    )
+    median_sampling_size = get_config_value(
+        config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE
+    )
+    ema_smoothing_window = get_config_value(
+        config_entry, "ema_smoothing_window", DEFAULT_EMA_WINDOW
+    )
 
     # Generate a unique hash based on the input sensor
     sensor_hash = generate_md5_hash(input_sensor)

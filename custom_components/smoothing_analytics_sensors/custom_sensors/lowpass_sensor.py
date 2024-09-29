@@ -22,8 +22,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     _attr_icon = ICON
     _attr_has_entity_name = True
 
-    def __init__(
-        self, input_sensor, time_constant, sensor_hash, config_entry):
+    def __init__(self, input_sensor, time_constant, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_sensor = input_sensor
         self._time_constant = time_constant
@@ -47,9 +46,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         )
 
         # Log updated settings
-        _LOGGER.debug(
-            f"Updated Lowpass settings: time_constant={self._time_constant}"
-        )
+        _LOGGER.debug(f"Updated Lowpass settings: time_constant={self._time_constant}")
 
     @property
     def name(self):
@@ -117,7 +114,8 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Apply lowpass filter when we have a previous value
         if self._previous_value is not None:
             self._state = round(
-                lowpass_filter(input_value, self._previous_value, self._time_constant), 2
+                lowpass_filter(input_value, self._previous_value, self._time_constant),
+                2,
             )
         else:
             self._state = input_value
