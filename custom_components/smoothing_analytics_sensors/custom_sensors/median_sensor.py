@@ -134,9 +134,10 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Append the current value to the list of data points
         self._data_points.append(input_value)
 
-        # Ensure we only keep the last `sampling_size` data points
+        # Ensure we only keep the last `sampling_size` data points, trim if needed
         if len(self._data_points) > self._sampling_size:
-            self._data_points.pop(0)
+            excess_points = len(self._data_points) - self._sampling_size
+            self._data_points = self._data_points[excess_points:]
 
         # Calculate the median if we have enough data points
         if len(self._data_points) >= self._sampling_size:
