@@ -1,11 +1,11 @@
 {
-  "name": "Power Sensor Smoothing",
-  "domain": "ha_power_smoothing",
-  "homeassistant": "2024.6.0",
-  "render_readme": true,
-  "country": ["global"],
-  "iot_class": "local_polling",
-  "filename": "ha_power_smoothing",
-  "domains": ["sensor"],
-  "documentation": "https://github.com/woopstar/ha_power_smoothing"
+  "name": "Smoothing Analytics Sensors",
+  "domain": "smoothing_analytics_sensors",
+  "documentation": "https://github.com/woopstar/smoothing-analytics-sensors",
+  "issue_tracker": "https://github.com/woopstar/smoothing-analytics-sensors/issues",
+  "codeowners": ["@woopstar"],
+  "requirements": [],
+  "config_flow": true,
+  "version": "1.0.0",
+  "iot_class": "local_polling"
 }

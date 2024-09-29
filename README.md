@@ -1,85 +1,96 @@
-# Power Smoothing Integration
+# Smoothing Analytics Sensors
 
-The goal of this integration is to smooth out short-term, high-power spikes (such as those caused by vacuum cleaners, coffee machines, ovens, etc.), ensuring that brief but significant power consumption does not heavily impact the final sensor reading. The raw power sensor updates every second.
+The goal of this integration is to smooth out short-term data spikes (such as those caused by vacuum cleaners, coffee machines, ovens, etc.), ensuring that brief but significant changes in sensor readings do not heavily impact the final output. The integration is designed to handle various input sensors, updating their readings at customizable intervals.
 
 ### Available Sensors
 
-This integration works by combining the following sensors:
-1. Raw power sensor (external source)
+This integration works by combining the following filters:
+1. Raw sensor (external source)
 2. Lowpass filter sensor
 3. Moving median sensor
 4. EMA (Exponential Moving Average) sensor
 
 ### Why an SMA Sensor Was Not Used
 
-- An **SMA (Simple Moving Average)** sensor calculates the average of a set number of recent data points in a fixed window. While this can smooth data, it gives equal weight to all data points in the window.
-- We did not use an SMA sensor in this case because it reacts slower to new trends compared to an EMA, and the moving median filter provides better handling of short-term spikes or outliers.
-- Unlike the EMA, the SMA doesn't prioritize recent data over older data, which can make it less responsive to changes in power consumption over time. This is important when dealing with fluctuating power usage in a home environment, where rapid response to changes is useful.
+- An **SMA (Simple Moving Average)** sensor averages a set number of recent data points in a fixed window. While it smooths data, it gives equal weight to all points in the window.
+- The SMA sensor was not chosen for this integration because it reacts slower to trends compared to the EMA and lacks the spike-handling robustness of the moving median filter.
+- The EMA sensor was chosen instead because it gives more weight to recent data, making it more responsive to changes in real-world data such as power consumption, temperature, or other sensor data.
 
 ### Summary
 
-The EMA sensor was preferred for this setup because it reacts faster to trends and provides more weight to recent data points. Combined with a lowpass filter and moving median, it provides a robust way to smooth short-term power spikes while still capturing long-term trends.
+The **EMA sensor** was preferred for this setup because it responds quickly to data trends, giving more importance to recent points. Together with the **lowpass filter** and **moving median**, it forms a reliable solution for smoothing out data spikes while preserving long-term trends.
 
 ### Strategy
 
-1. **Lowpass Filter**: First, we apply a lowpass filter to the raw data to remove very short, rapid fluctuations (spikes) that may occur from appliances such as a vacuum cleaner.
-2. **Moving Median Filter**: Then, we use a moving median filter to further smooth any remaining extreme values, as the median is more resistant to outliers than the mean.
-3. **EMA Sensor**: Finally, we apply an Exponential Moving Average (EMA) sensor, which dynamically calculates an exponential moving average. This provides an even smoother result, especially useful for long-term trends, while allowing you to adjust how quickly the sensor responds to changes by setting a smoothing window.
+1. **Lowpass Filter**: Applies first to remove rapid fluctuations or spikes in the raw sensor data.
+2. **Moving Median Filter**: Reduces the influence of remaining extreme values by using the median, which is resistant to outliers.
+3. **EMA Sensor**: Applies a final smoothing step using an Exponential Moving Average, prioritizing recent data while still capturing long-term trends.
 
 ### Structure and Behavior
 
-This structure ensures that short-term fluctuations (e.g., under 5 minutes) have minimal influence on the final sensor reading, while allowing the system to still track long-term changes in power consumption.
+This integration ensures that short-term fluctuations (e.g., under 5 minutes) have minimal impact on the final sensor reading, while allowing the system to still capture long-term changes.
 
 ### Key Parameters
 
-- **Lowpass Filter**: A time constant of 15 seconds is used to smooth out fast, short-term fluctuations.
-- **Moving Median**: A window size of 15 seconds (sampling 15 data points) is used to remove extreme outliers.
-- **EMA**: The alpha value is dynamically calculated based on a smoothing window of 5 minutes (300 seconds), meaning that only changes lasting longer than 5 minutes will significantly affect the sensor.
+- **Lowpass Filter**: The default time constant is 15 seconds to smooth out fast fluctuations.
+- **Moving Median**: The default window size is 15 data points to filter extreme outliers.
+- **EMA**: The default smoothing window is 300 seconds (5 minutes), ensuring only sustained changes affect the sensor readings.
 
 ## Sensor Explanations
 
 ### 1. Lowpass Filtered Sensor
 
-The lowpass filter is used to remove short-term fluctuations and spikes from the raw data. The time constant determines how quickly the filter responds to changes. A higher time constant makes the sensor respond slower, smoothing the data more. 
+The lowpass filter removes short-term spikes and fluctuations. The time constant controls how quickly it reacts to changes.
 
-- **Purpose**: The lowpass filter removes fast, short-term fluctuations from the raw data.
-- **Time Constant**: Set to 15 seconds. This controls how fast the filter reacts to changes. A higher value smooths the data more but delays the sensor's reaction to real changes.
-- **Rationale**: A 15-second time constant smooths out short spikes from devices like vacuum cleaners or coffee machines without losing the ability to respond to more prolonged changes.
+- **Purpose**: Smooths out rapid spikes.
+- **Time Constant**: 15 seconds. A higher value smooths more but reacts slower.
+- **Rationale**: A 15-second time constant is ideal for handling short spikes from appliances while responding to longer-term changes.
 
 ### 2. Moving Median Filtered Sensor
 
-The moving median filter is used to smooth out any remaining extreme spikes from the lowpass-filtered data. Unlike a moving average, the median is more resistant to outliers, making it effective at removing brief, extreme spikes, such as from a vacuum cleaner or coffee machine.
+The moving median filter removes any remaining outliers from the lowpass-filtered data.
 
-- **Purpose**: The moving median filter smooths the data by eliminating extreme outliers. It is especially useful after the lowpass filter to handle remaining spikes.
-- **Sampling Size**: Set to 15 seconds. The median will be calculated over the last 15 data points.
-- **Rationale**: Using the median of the last 15 seconds prevents extreme spikes, such as those caused by short-term events (e.g., a coffee machine), from affecting the overall reading too much.
+- **Purpose**: Eliminates extreme outliers.
+- **Sampling Size**: 15 data points. The median of the last 15 points is calculated.
+- **Rationale**: Prevents extreme spikes from heavily influencing the final reading.
 
-### 3. Flexible EMA (Exponential Moving Average) Filtered Sensor
+### 3. EMA (Exponential Moving Average) Filtered Sensor
 
-The final sensor in the chain applies an Exponential Moving Average (EMA) filter on the median-filtered data. The alpha value determines how quickly the EMA responds to new data. A lower alpha value results in a smoother sensor that reacts slower to changes. This EMA implementation allows dynamic adjustment by using a smoothing window (in seconds).
+The final smoothing step applies an Exponential Moving Average to the median-filtered data.
 
-- **Purpose**: The EMA sensor applies an Exponential Moving Average to smooth the data further. It responds more quickly to longer-term trends than the median filter but remains resistant to short-term spikes.
-- **Smoothing Window**: Set to 300 seconds (5 minutes). The EMA will only react to changes that last longer than this period.
-- **Alpha Calculation**: The alpha is dynamically calculated using the formula:  
+- **Purpose**: Provides final smoothing while prioritizing recent data points.
+- **Smoothing Window**: 300 seconds (5 minutes).
+- **Alpha Calculation**:
   \[
   \alpha = \frac{2}{\text{smoothing\_window\_seconds} + 1}
   \]
-- **Rationale**: A 5-minute window ensures that the sensor reacts slowly to spikes, effectively ignoring short-term peaks. The dynamic alpha calculation makes it easy to adjust the window size to control how responsive the sensor is.
+- **Rationale**: Ensures the sensor reacts slowly to spikes while capturing long-term trends.
 
 ## Installation
 
-1. Copy the `ha_power_smoothing` folder to your `custom_components` folder in your Home Assistant configuration.
+### Method 1: HACS (Home Assistant Community Store)
+1. In HACS, go to **Integrations**.
+2. Click the three dots in the top-right corner, and select **Custom repositories**.
+3. Add this repository URL and select **Integration** as the category:
+   `https://github.com/woopstar/smoothing_analytics_sensors`
+4. Click **Add**.
+5. The integration will now appear in HACS under the **Integrations** section. Click **Install**.
+6. Restart Home Assistant.
+
+### Method 2: Manual Installation
+1. Copy the `smoothing_analytics_sensors` folder to your `custom_components` folder in your Home Assistant configuration.
 2. Restart Home Assistant.
 3. Add the integration via the Home Assistant integrations page and configure your settings.
 
 ## Configuration
 
-In the configuration flow, you will be able to select the following options:
-- **Input Sensor**: The raw power sensor to be smoothed.
-- **Lowpass Time Constant**: Defines how quickly the lowpass filter smooths out fluctuations (default: 15 seconds).
-- **Median Sampling Size**: Defines how many data points are considered for the median calculation (default: 15).
+In the configuration flow, you can customize:
+- **Input Sensor**: The raw sensor to be smoothed.
+- **Lowpass Time Constant**: Controls how quickly the lowpass filter smooths data (default: 15 seconds).
+- **Median Sampling Size**: Defines how many data points are used for the median calculation (default: 15).
 - **EMA Smoothing Window**: Defines the window for calculating the EMA (default: 300 seconds).
+- **Update Interval**: Defines how often the sensor updates (default: 5 seconds).
 
 ## Conclusion
 
-This integration provides a robust method for smoothing short-term spikes in power consumption while maintaining responsiveness to long-term changes. The combination of lowpass filtering, median filtering, and exponential moving average allows for a flexible, customizable, and reliable solution for power monitoring.
+Smoothing Analytics Sensors provides a flexible, reliable way to smooth data, making it especially useful for real-time monitoring environments. The combination of lowpass, median, and exponential moving average filtering ensures that both short-term fluctuations and long-term trends are accurately tracked.
