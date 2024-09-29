@@ -1,5 +1,7 @@
 {
   "name": "Smoothing Analytics Sensors",
   "render_readme": true,
-  "homeassistant": "2024.9.3"
+  "homeassistant": "2024.6.0",
+  "zip_release": true,
+  "filename": "smoothing_analytics_sensors.zip"
 }
