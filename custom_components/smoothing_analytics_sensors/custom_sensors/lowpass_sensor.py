@@ -24,13 +24,12 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def __init__(
         self, input_sensor, time_constant, sensor_hash, config_entry, update_interval
     ):
-        # Kald super med config_entry for at sikre korrekt initialisering
         super().__init__(config_entry)
         self._input_sensor = input_sensor
         self._time_constant = time_constant
         self._sensor_hash = sensor_hash
         self._state = None
-        self._previous_value = 0  # Store the previous value for filtering
+        self._previous_value = 0
         self._update_count = 0
         self._last_update_time = None
         self._last_updated = None
@@ -88,13 +87,16 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "last_updated": self._last_updated,
             "update_count": self._update_count,
             "time_since_last_update": time_since_last_update,
-            "raw_input": self._previous_value,
+            "previous_value": self._previous_value,
             "update_interval": self._update_interval,
         }
 
     async def async_update(self):
-        # Check if enough time has passed since the last update based on the update interval
+        """Update the sensor state based on the input sensor's value."""
+
         now = datetime.now()
+
+        # Check if enough time has passed since the last update based on the update interval
         if (
             self._last_update_time
             and (now - self._last_update_time).total_seconds() < self._update_interval
@@ -108,6 +110,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         try:
             current_value = float(input_state.state)
         except ValueError:
+            _LOGGER.error(
+                f"Invalid value from {self._input_sensor}: {input_state.state}"
+            )
             return
 
         # Fetch unit_of_measurement and device_class from the input sensor

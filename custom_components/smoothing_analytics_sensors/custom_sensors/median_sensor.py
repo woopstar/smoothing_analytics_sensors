@@ -23,11 +23,13 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._sampling_size = sampling_size
         self._sensor_hash = sensor_hash
         self._state = None
-        self._data_points = []  # Store the last N data points
+        self._data_points = []
         self._last_updated = None
         self._update_count = 0
         self._last_update_time = None
-        self._input_entity_id = None  # To store the resolved entity_id
+        self._input_entity_id = None
+        self._unit_of_measurement = None
+        self._device_class = None
         self._unique_id = f"sas_median_{sensor_hash}"
 
     @property
@@ -41,6 +43,14 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def unit_of_measurement(self):
+        return self._unit_of_measurement
+
+    @property
+    def device_class(self):
+        return self._device_class
 
     @property
     def device_info(self):
@@ -82,6 +92,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_update(self):
         """Update the sensor state based on the input sensor's value."""
+
+        now = datetime.now()
+
         # Check if the input_entity_id has been resolved from unique_id
         if not self._input_entity_id:
             await self._resolve_input_entity_id()
@@ -94,7 +107,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         input_state = self.hass.states.get(self._input_entity_id)
         if input_state is None or input_state.state is None:
             _LOGGER.warning(
-                f"Sensor {self._input_entity_id} not ready or not found. Skipping median update."
+                f"Sensor {self._input_entity_id} not ready or not found. Skipping median sensor update."
             )
             return
         try:
@@ -104,6 +117,10 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 f"Invalid value from {self._input_entity_id}: {input_state.state}"
             )
             return
+
+        # Fetch unit_of_measurement and device_class from the input sensor
+        self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
+        self._device_class = input_state.attributes.get("device_class")
 
         # Append the current value to the list of data points
         self._data_points.append(current_value)
@@ -115,7 +132,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Calculate the median if we have enough data points
         if len(self._data_points) >= self._sampling_size:
             self._state = round(statistics.median(self._data_points), 2)
-            self._last_updated = datetime.now().isoformat()
+            self._last_updated = now.isoformat()
 
         # Log the data points for debugging purposes
         _LOGGER.debug(
@@ -125,7 +142,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Update count and last update time
         self._update_count += 1
-        self._last_update_time = datetime.now()
+        self._last_update_time = now
 
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
@@ -133,7 +150,8 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         entry = registry.async_get_entity_id("sensor", DOMAIN, self._input_unique_id)
 
         if entry:
-            self._input_entity_id = entry  # This should assign the correct entity_id
+            self._input_entity_id = entry
+
             _LOGGER.debug(
                 f"Resolved entity_id for unique_id {self._input_unique_id}: {self._input_entity_id}"
             )
@@ -144,10 +162,12 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
-        # Restore the previous state and data points from persistent storage
+        # Restore the previous state from persistent storage
         old_state = await self.async_get_last_state()
+
         if old_state is not None:
             _LOGGER.info(f"Restoring state for {self._unique_id}")
+
             try:
                 self._state = round(float(old_state.state), 2)
                 self._data_points = old_state.attributes.get("data_points", []) or []
@@ -156,7 +176,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                     f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
                 )
                 self._state = None
-                self._data_points = []  # Reset data points if state is invalid
+                self._data_points = []
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
