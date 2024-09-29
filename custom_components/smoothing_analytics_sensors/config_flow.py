@@ -1,11 +1,20 @@
 import logging
+
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
-import voluptuous as vol
-from .const import DOMAIN, DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DEFAULT_EMA_WINDOW, DEFAULT_UPDATE_INTERVAL
+
+from .const import (
+    DEFAULT_EMA_WINDOW,
+    DEFAULT_LOW_PASS,
+    DEFAULT_MEDIAN_SIZE,
+    DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for Smoothing Analytics Sensors."""
@@ -24,53 +33,71 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Opret konfigurationen med device_name som titel
                 return self.async_create_entry(
                     title=user_input.get("device_name", "Smoothing Analytics Device"),
-                    data=user_input
+                    data=user_input,
                 )
 
         # Brug Home Assistant selectors for at få input med default værdier
-        data_schema = vol.Schema({
-            vol.Required("input_sensor"): selector({
-                "entity": {"domain": "sensor"}
-            }),
-            vol.Optional("device_name", default="Smoothing Analytics Device"): str,  # Device Name felt
-            vol.Optional("lowpass_time_constant", default=DEFAULT_LOW_PASS): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("median_sampling_size", default=DEFAULT_MEDIAN_SIZE): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "samples",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("ema_smoothing_window", default=DEFAULT_EMA_WINDOW): selector({
-                "number": {
-                    "min": 60,
-                    "max": 3600,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            })
-        })
+        data_schema = vol.Schema(
+            {
+                vol.Required("input_sensor"): selector(
+                    {"entity": {"domain": "sensor"}}
+                ),
+                vol.Optional(
+                    "device_name", default="Smoothing Analytics Device"
+                ): str,  # Device Name felt
+                vol.Optional(
+                    "lowpass_time_constant", default=DEFAULT_LOW_PASS
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "median_sampling_size", default=DEFAULT_MEDIAN_SIZE
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "samples",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "ema_smoothing_window", default=DEFAULT_EMA_WINDOW
+                ): selector(
+                    {
+                        "number": {
+                            "min": 60,
+                            "max": 3600,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "update_interval", default=DEFAULT_UPDATE_INTERVAL
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+            }
+        )
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=data_schema,
-            errors=self._errors
+            step_id="user", data_schema=data_schema, errors=self._errors
         )
 
     @staticmethod
@@ -93,45 +120,80 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
             # Opdatering af enhedens navn i options flow
             return self.async_create_entry(
                 title=user_input.get("device_name", self.config_entry.title),
-                data=user_input
+                data=user_input,
             )
 
         # Brug af default værdier fra options og translations
-        data_schema = vol.Schema({
-            vol.Optional("device_name", default=self.config_entry.options.get("device_name", "Smoothing Analytics Device")): str,
-            vol.Optional("lowpass_time_constant", default=self.config_entry.options.get("lowpass_time_constant", DEFAULT_LOW_PASS)): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("median_sampling_size", default=self.config_entry.options.get("median_sampling_size", DEFAULT_MEDIAN_SIZE)): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "samples",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("ema_smoothing_window", default=self.config_entry.options.get("ema_smoothing_window", DEFAULT_EMA_WINDOW)): selector({
-                "number": {
-                    "min": 60,
-                    "max": 3600,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            }),
-            vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", DEFAULT_UPDATE_INTERVAL)): selector({
-                "number": {
-                    "min": 1,
-                    "max": 60,
-                    "unit_of_measurement": "seconds",
-                    "mode": "box"
-                }
-            })
-        })
+        data_schema = vol.Schema(
+            {
+                vol.Optional(
+                    "device_name",
+                    default=self.config_entry.options.get(
+                        "device_name", "Smoothing Analytics Device"
+                    ),
+                ): str,
+                vol.Optional(
+                    "lowpass_time_constant",
+                    default=self.config_entry.options.get(
+                        "lowpass_time_constant", DEFAULT_LOW_PASS
+                    ),
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "median_sampling_size",
+                    default=self.config_entry.options.get(
+                        "median_sampling_size", DEFAULT_MEDIAN_SIZE
+                    ),
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "samples",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "ema_smoothing_window",
+                    default=self.config_entry.options.get(
+                        "ema_smoothing_window", DEFAULT_EMA_WINDOW
+                    ),
+                ): selector(
+                    {
+                        "number": {
+                            "min": 60,
+                            "max": 3600,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+                vol.Optional(
+                    "update_interval",
+                    default=self.config_entry.options.get(
+                        "update_interval", DEFAULT_UPDATE_INTERVAL
+                    ),
+                ): selector(
+                    {
+                        "number": {
+                            "min": 1,
+                            "max": 60,
+                            "unit_of_measurement": "seconds",
+                            "mode": "box",
+                        }
+                    }
+                ),
+            }
+        )
 
         return self.async_show_form(
             step_id="init",

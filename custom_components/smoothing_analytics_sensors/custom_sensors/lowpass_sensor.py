@@ -1,15 +1,19 @@
 import logging
 from datetime import datetime
-from ..entity import SmoothingAnalyticsEntity
+
 from homeassistant.helpers.restore_state import RestoreEntity
-from ..const import DOMAIN, NAME, VERSION, ICON
+
+from ..const import DOMAIN, ICON, NAME, VERSION
+from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def lowpass_filter(current_value, previous_value, time_constant):
     """Apply a lowpass filter to smooth out fast fluctuations."""
     alpha = time_constant / (time_constant + 1)
     return alpha * current_value + (1 - alpha) * previous_value
+
 
 class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Lowpass filtered sensor with persistent state, precision of 2 decimal places, and device support."""
@@ -17,7 +21,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     _attr_icon = ICON
     _attr_has_entity_name = True
 
-    def __init__(self, input_sensor, time_constant, sensor_hash, config_entry, update_interval):
+    def __init__(
+        self, input_sensor, time_constant, sensor_hash, config_entry, update_interval
+    ):
         # Kald super med config_entry for at sikre korrekt initialisering
         super().__init__(config_entry)
         self._input_sensor = input_sensor
@@ -48,7 +54,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return device information for the Lowpass Sensor."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Smoothing Analytics Device"),
+            "name": self.config_entry.data.get(
+                "device_name", "Smoothing Analytics Device"
+            ),
             "model": VERSION,
             "manufacturer": NAME,
         }
@@ -58,7 +66,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
         time_since_last_update = None
         if self._last_update_time:
-            time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
+            time_since_last_update = (
+                datetime.now() - self._last_update_time
+            ).total_seconds()
 
         return {
             "lowpass_time_constant": self._time_constant,
@@ -75,7 +85,10 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     async def async_update(self):
         # Check if enough time has passed since the last update based on the update interval
         now = datetime.now()
-        if self._last_update_time and (now - self._last_update_time).total_seconds() < self._update_interval:
+        if (
+            self._last_update_time
+            and (now - self._last_update_time).total_seconds() < self._update_interval
+        ):
             return  # Skip the update if the interval hasn't passed
 
         input_state = self.hass.states.get(self._input_sensor)
@@ -88,7 +101,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             return
 
         # Apply lowpass filter
-        self._state = round(lowpass_filter(current_value, self._previous_value, self._time_constant), 2)
+        self._state = round(
+            lowpass_filter(current_value, self._previous_value, self._time_constant), 2
+        )
         self._previous_value = current_value
         self._last_updated = now.isoformat()
 
@@ -105,10 +120,14 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 self._state = round(float(old_state.state), 2)
                 self._previous_value = float(self._state)  # Restore the previous value
             except (ValueError, TypeError):
-                _LOGGER.warning(f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}")
+                _LOGGER.warning(
+                    f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
+                )
                 self._state = None
                 self._previous_value = 0  # Reset to 0 if the state is not valid
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
-            _LOGGER.info(f"No previous state found for {self._unique_id}, starting fresh.")
+            _LOGGER.info(
+                f"No previous state found for {self._unique_id}, starting fresh."
+            )

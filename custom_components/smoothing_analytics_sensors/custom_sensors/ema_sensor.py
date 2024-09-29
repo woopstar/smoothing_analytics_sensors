@@ -1,16 +1,20 @@
 import logging
 from datetime import datetime
-from ..entity import SmoothingAnalyticsEntity
-from homeassistant.helpers.restore_state import RestoreEntity
+
 from homeassistant.helpers import entity_registry as er
-from ..const import DOMAIN, NAME, VERSION, ICON
+from homeassistant.helpers.restore_state import RestoreEntity
+
+from ..const import DOMAIN, ICON, NAME, VERSION
+from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def ema_filter(current_value, previous_ema, smoothing_window):
     """Apply Exponential Moving Average (EMA) filter."""
     alpha = 2 / (smoothing_window + 1)
     return alpha * current_value + (1 - alpha) * previous_ema
+
 
 class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Exponential Moving Average (EMA) filtered sensor with persistent state and device support, based on unique_id."""
@@ -29,10 +33,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._last_updated = None
         self._update_count = 0
         self._last_update_time = None
-        #self.config_entry = config_entry
+        # self.config_entry = config_entry
         self._input_entity_id = None  # To store the resolved entity_id
         self._unique_id = f"sas_ema_{sensor_hash}"
-
 
     @property
     def name(self):
@@ -51,7 +54,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return device information for the EMA Sensor."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Smoothing Analytics Device"),
+            "name": self.config_entry.data.get(
+                "device_name", "Smoothing Analytics Device"
+            ),
             "model": VERSION,
             "manufacturer": NAME,
         }
@@ -61,7 +66,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
         time_since_last_update = None
         if self._last_update_time:
-            time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
+            time_since_last_update = (
+                datetime.now() - self._last_update_time
+            ).total_seconds()
 
         return {
             "ema_smoothing_window": self._smoothing_window,
@@ -88,7 +95,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         input_state = self.hass.states.get(self._input_entity_id)
         if input_state is None or input_state.state is None:
-            _LOGGER.warning(f"Sensor {self._input_entity_id} not ready or not found. Skipping EMA update.")
+            _LOGGER.warning(
+                f"Sensor {self._input_entity_id} not ready or not found. Skipping EMA update."
+            )
             return
         try:
             current_value = float(input_state.state)
@@ -96,7 +105,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             return
 
         # Apply EMA filter
-        self._state = round(ema_filter(current_value, self._previous_ema, self._smoothing_window), 2)
+        self._state = round(
+            ema_filter(current_value, self._previous_ema, self._smoothing_window), 2
+        )
         self._previous_ema = self._state  # Store the filtered value for next iteration
         self._last_updated = datetime.now().isoformat()
 
@@ -111,7 +122,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         if entry:
             self._input_entity_id = entry
         else:
-            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found in registry.")
+            _LOGGER.warning(
+                f"Entity with unique_id {self._input_unique_id} not found in registry."
+            )
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
@@ -121,12 +134,18 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.info(f"Restoring state for {self._unique_id}")
             try:
                 self._state = round(float(old_state.state), 2)
-                self._previous_ema = float(self._state)  # Restore the previous EMA value
+                self._previous_ema = float(
+                    self._state
+                )  # Restore the previous EMA value
             except (ValueError, TypeError):
-                _LOGGER.warning(f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}")
+                _LOGGER.warning(
+                    f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
+                )
                 self._state = None
                 self._previous_ema = 0  # Reset to 0 if the state is not valid
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
-            _LOGGER.info(f"No previous state found for {self._unique_id}, starting fresh.")
+            _LOGGER.info(
+                f"No previous state found for {self._unique_id}, starting fresh."
+            )

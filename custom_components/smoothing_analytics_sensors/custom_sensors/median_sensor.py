@@ -1,12 +1,15 @@
-import statistics
 import logging
+import statistics
 from datetime import datetime
-from ..entity import SmoothingAnalyticsEntity
-from homeassistant.helpers.restore_state import RestoreEntity
+
 from homeassistant.helpers import entity_registry as er
-from ..const import DOMAIN, NAME, VERSION, ICON
+from homeassistant.helpers.restore_state import RestoreEntity
+
+from ..const import DOMAIN, ICON, NAME, VERSION
+from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Median filtered sensor with persistent state and device support, based on unique_id."""
@@ -44,7 +47,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return device information for the Median Sensor."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Smoothing Analytics Device"),
+            "name": self.config_entry.data.get(
+                "device_name", "Smoothing Analytics Device"
+            ),
             "model": VERSION,
             "manufacturer": NAME,
         }
@@ -54,7 +59,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
         time_since_last_update = None
         if self._last_update_time:
-            time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
+            time_since_last_update = (
+                datetime.now() - self._last_update_time
+            ).total_seconds()
 
         data_points_count = len(self._data_points)
         missing_data_points = max(0, self._sampling_size - data_points_count)
@@ -86,12 +93,16 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         input_state = self.hass.states.get(self._input_entity_id)
         if input_state is None or input_state.state is None:
-            _LOGGER.warning(f"Sensor {self._input_entity_id} not ready or not found. Skipping median update.")
+            _LOGGER.warning(
+                f"Sensor {self._input_entity_id} not ready or not found. Skipping median update."
+            )
             return
         try:
             current_value = float(input_state.state)
         except ValueError:
-            _LOGGER.error(f"Invalid value from {self._input_entity_id}: {input_state.state}")
+            _LOGGER.error(
+                f"Invalid value from {self._input_entity_id}: {input_state.state}"
+            )
             return
 
         # Append the current value to the list of data points
@@ -107,8 +118,10 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             self._last_updated = datetime.now().isoformat()
 
         # Log the data points for debugging purposes
-        _LOGGER.debug(f"Updated MedianSensor with input_entity_id: {self._input_entity_id}, "
-                      f"current_value: {current_value}, data_points: {self._data_points}")
+        _LOGGER.debug(
+            f"Updated MedianSensor with input_entity_id: {self._input_entity_id}, "
+            f"current_value: {current_value}, data_points: {self._data_points}"
+        )
 
         # Update count and last update time
         self._update_count += 1
@@ -121,9 +134,13 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         if entry:
             self._input_entity_id = entry  # This should assign the correct entity_id
-            _LOGGER.debug(f"Resolved entity_id for unique_id {self._input_unique_id}: {self._input_entity_id}")
+            _LOGGER.debug(
+                f"Resolved entity_id for unique_id {self._input_unique_id}: {self._input_entity_id}"
+            )
         else:
-            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found in registry.")
+            _LOGGER.warning(
+                f"Entity with unique_id {self._input_unique_id} not found in registry."
+            )
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
@@ -135,10 +152,14 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 self._state = round(float(old_state.state), 2)
                 self._data_points = old_state.attributes.get("data_points", []) or []
             except (ValueError, TypeError):
-                _LOGGER.warning(f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}")
+                _LOGGER.warning(
+                    f"Could not restore state for {self._unique_id}, invalid value: {old_state.state}"
+                )
                 self._state = None
                 self._data_points = []  # Reset data points if state is invalid
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
-            _LOGGER.info(f"No previous state found for {self._unique_id}, starting fresh.")
+            _LOGGER.info(
+                f"No previous state found for {self._unique_id}, starting fresh."
+            )

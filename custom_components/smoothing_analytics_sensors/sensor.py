@@ -1,15 +1,18 @@
-import logging
 import hashlib
+import logging
+
+from .const import DOMAIN
+from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
-from .custom_sensors.ema_sensor import EmaSensor
-from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def generate_md5_hash(input_sensor):
     """Generate an MD5 hash based on the input sensor's name."""
-    return hashlib.md5(input_sensor.encode('utf-8')).hexdigest()
+    return hashlib.md5(input_sensor.encode("utf-8")).hexdigest()
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
@@ -29,9 +32,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     ema_unique_id = f"sas_median_{sensor_hash}"
 
     # Create the lowpass, median, and ema sensors using the unique IDs
-    lowpass_sensor = LowpassSensor(input_sensor, lowpass_time_constant, sensor_hash, config_entry, update_interval)
-    median_sensor = MedianSensor(median_unique_id, median_sampling_size, sensor_hash, config_entry)
-    ema_sensor = EmaSensor(ema_unique_id, ema_smoothing_window, sensor_hash, config_entry)
+    lowpass_sensor = LowpassSensor(
+        input_sensor, lowpass_time_constant, sensor_hash, config_entry, update_interval
+    )
+    median_sensor = MedianSensor(
+        median_unique_id, median_sampling_size, sensor_hash, config_entry
+    )
+    ema_sensor = EmaSensor(
+        ema_unique_id, ema_smoothing_window, sensor_hash, config_entry
+    )
 
     # Add sensors to Home Assistant
     async_add_entities([lowpass_sensor, median_sensor, ema_sensor])
@@ -40,6 +49,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
     hass.data[DOMAIN][config_entry.entry_id] = async_add_entities
+
 
 async def async_unload_entry(hass, entry):
     """Handle unloading of an entry."""
