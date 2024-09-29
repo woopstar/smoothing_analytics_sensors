@@ -2,13 +2,21 @@
 
 The goal of this integration is to smooth out short-term data spikes (such as those caused by vacuum cleaners, coffee machines, ovens, etc.), ensuring that brief but significant changes in sensor readings do not heavily impact the final output. The integration is designed to handle various input sensors, updating their readings at customizable intervals.
 
+### Sensor Stacking
+
+The sensors in this integration work in a sequential stack, where each filter is applied to the result of the previous filter:
+1. **Lowpass Filter**: First, applied to the raw sensor data.
+2. **Moving Median Filter**: Then, applied to the lowpass-filtered data.
+3. **EMA (Exponential Moving Average) Filter**: Finally, applied to the median-filtered data.
+
+This approach ensures that each filter progressively smooths out noise, short-term fluctuations, and outliers from the data.
+
 ### Available Sensors
 
-This integration works by combining the following filters:
-1. Raw sensor (external source)
-2. Lowpass filter sensor
-3. Moving median sensor
-4. EMA (Exponential Moving Average) sensor
+This integration provides three main sensor types:
+1. **Lowpass filter sensor** – applied directly to the raw input data.
+2. **Moving median sensor** – applied to the lowpass-filtered data.
+3. **EMA (Exponential Moving Average) sensor** – applied to the median-filtered data.
 
 ### Why an SMA Sensor Was Not Used
 
@@ -22,9 +30,9 @@ The **EMA sensor** was preferred for this setup because it responds quickly to d
 
 ### Strategy
 
-1. **Lowpass Filter**: Applies first to remove rapid fluctuations or spikes in the raw sensor data.
-2. **Moving Median Filter**: Reduces the influence of remaining extreme values by using the median, which is resistant to outliers.
-3. **EMA Sensor**: Applies a final smoothing step using an Exponential Moving Average, prioritizing recent data while still capturing long-term trends.
+1. **Lowpass Filter**: Applies first to the raw sensor data to remove rapid fluctuations or spikes.
+2. **Moving Median Filter**: Further smooths the lowpass-filtered data to handle remaining extreme outliers.
+3. **EMA Sensor**: Final smoothing step using an Exponential Moving Average to prioritize recent data points and track long-term trends.
 
 ### Structure and Behavior
 
@@ -40,25 +48,25 @@ This integration ensures that short-term fluctuations (e.g., under 5 minutes) ha
 
 ### 1. Lowpass Filtered Sensor
 
-The lowpass filter removes short-term spikes and fluctuations. The time constant controls how quickly it reacts to changes.
+The lowpass filter is applied to the raw sensor data and is used to remove short-term spikes and fluctuations. The time constant controls how quickly it reacts to changes.
 
-- **Purpose**: Smooths out rapid spikes.
+- **Purpose**: Smooths out rapid spikes from the raw data.
 - **Time Constant**: 15 seconds. A higher value smooths more but reacts slower.
 - **Rationale**: A 15-second time constant is ideal for handling short spikes from appliances while responding to longer-term changes.
 
 ### 2. Moving Median Filtered Sensor
 
-The moving median filter removes any remaining outliers from the lowpass-filtered data.
+The moving median filter is applied to the lowpass-filtered data to remove any remaining outliers. The median is more resistant to extreme values than the mean, making it effective for eliminating short-term spikes.
 
-- **Purpose**: Eliminates extreme outliers.
+- **Purpose**: Removes extreme outliers in the lowpass-filtered data.
 - **Sampling Size**: 15 data points. The median of the last 15 points is calculated.
 - **Rationale**: Prevents extreme spikes from heavily influencing the final reading.
 
 ### 3. EMA (Exponential Moving Average) Filtered Sensor
 
-The final smoothing step applies an Exponential Moving Average to the median-filtered data.
+The final smoothing step applies an Exponential Moving Average to the median-filtered data. This gives more weight to recent data points, making the sensor responsive to long-term trends while filtering out short-term noise.
 
-- **Purpose**: Provides final smoothing while prioritizing recent data points.
+- **Purpose**: Applies final smoothing, focusing on recent data trends.
 - **Smoothing Window**: 300 seconds (5 minutes).
 - **Alpha Calculation**:
   Alpha is calculated using the following formula:
