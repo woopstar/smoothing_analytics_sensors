@@ -68,11 +68,14 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
 
         # Calculate the time since the last update
-        time_since_last_update = None
+        time_since_last_update = 0
         if self._last_update_time:
-            time_since_last_update = (
-                datetime.now() - self._last_update_time
-            ).total_seconds()
+            try:
+                # Calculate time difference
+                time_since_last_update = (datetime.now() - self._last_update_time).total_seconds()
+            except TypeError:
+                _LOGGER.error("Error calculating time_since_last_update. Check if _last_update_time is set correctly.")
+                time_since_last_update = 0
 
         # Calculate the number of data points
         data_points_count = len(self._data_points)
@@ -143,7 +146,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         if len(self._data_points) >= self._sampling_size:
             self._state = round(statistics.median(self._data_points), 2)
             self._last_updated = now.isoformat()
-            self._last_update_time = now
+            self._last_update_time = datetime.now()
 
         # Log the data points for debugging purposes
         _LOGGER.debug(
@@ -195,6 +198,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 self._data_points = []
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_count = old_state.attributes.get("update_count", 0)
+            self._last_update_time = old_state.attributes.get("last_update_time", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."
