@@ -127,8 +127,14 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             ema_filter(input_value, self._previous_value, self._alpha), 2
         )
 
-        # Update the previous value and last updated time
-        self._previous_value = input_value
+        # Log detailed information about the update
+        _LOGGER.debug(f"Input value: {input_value}, Previous EMA value: {self._previous_value}, Alpha: {self._alpha}")
+        _LOGGER.debug(f"New EMA value: {self._state}")
+
+        # Update the previous EMA value to the new EMA value
+        self._previous_value = self._state
+
+        # Update the last updated time
         self._last_updated = now.isoformat()
 
         # Update count and last update time

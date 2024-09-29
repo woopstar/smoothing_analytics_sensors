@@ -9,10 +9,10 @@ from ..entity import SmoothingAnalyticsEntity
 _LOGGER = logging.getLogger(__name__)
 
 
-def lowpass_filter(current_value, previous_value, time_constant):
+def lowpass_filter(input_value, previous_value, time_constant):
     """Apply a lowpass filter to smooth out fast fluctuations."""
     alpha = time_constant / (time_constant + 1)
-    return alpha * current_value + (1 - alpha) * previous_value
+    return alpha * input_value + (1 - alpha) * previous_value
 
 
 class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
@@ -100,7 +100,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.warning(f"Sensor {self._input_sensor} not found.")
             return
         try:
-            current_value = float(input_state.state)
+            input_value = float(input_state.state)
         except ValueError:
             _LOGGER.error(
                 f"Invalid value from {self._input_sensor}: {input_state.state}"
@@ -113,11 +113,17 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Apply lowpass filter
         self._state = round(
-            lowpass_filter(current_value, self._previous_value, self._time_constant), 2
+            lowpass_filter(input_value, self._previous_value, self._time_constant), 2
         )
 
-        # Update the previous value and last updated time
-        self._previous_value = current_value
+        # Log detailed information about the update
+        _LOGGER.debug(f"Input value: {input_value}, Previous lowpass value: {self._previous_value}")
+        _LOGGER.debug(f"New lowpass value: {self._state}")
+
+        # Update the previous lowpass value to the new lowpass value
+        self._previous_value = self._state
+
+        # Update the last updated time
         self._last_updated = now.isoformat()
 
         # Update count and last update time
