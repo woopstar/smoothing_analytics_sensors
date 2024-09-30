@@ -8,7 +8,7 @@
           "input_sensor": "Input Sensor",
           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
-          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)",
+          "desired_time_to_95": "EMA Ønsket tid til at nå 95% (sekunder)",
           "device_name": "Navn"
         }
       }
@@ -26,7 +26,7 @@
           "device_name": "Navn",
           "lowpass_time_constant": "Lowpass Tidskonstant (sekunder)",
           "median_sampling_size": "Median Prøvestørrelse (størrelse)",
-          "ema_smoothing_window": "EMA Udglatningsvindue (sekunder)"
+          "desired_time_to_95": "EMA Ønsket tid til at nå 95% (sekunder)"
         }
       }
     }

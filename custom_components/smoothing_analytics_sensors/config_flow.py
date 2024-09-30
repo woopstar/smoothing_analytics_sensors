@@ -5,7 +5,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
 
-from .const import DEFAULT_EMA_WINDOW, DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DOMAIN
+from .const import DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DOMAIN, DEFAULT_EMA_DESIRED_TIME_TO_95
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,12 +63,12 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     }
                 ),
                 vol.Optional(
-                    "ema_smoothing_window", default=DEFAULT_EMA_WINDOW
+                    "desired_time_to_95", default=DEFAULT_EMA_DESIRED_TIME_TO_95
                 ): selector(
                     {
                         "number": {
-                            "min": 60,
-                            "max": 3600,
+                            "min": 10,
+                            "max": 600,
                             "unit_of_measurement": "seconds",
                             "mode": "box",
                         }
@@ -145,15 +145,15 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
                     }
                 ),
                 vol.Optional(
-                    "ema_smoothing_window",
+                    "desired_time_to_95",
                     default=self.config_entry.options.get(
-                        "ema_smoothing_window", DEFAULT_EMA_WINDOW
+                        "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
                     ),
                 ): selector(
                     {
                         "number": {
-                            "min": 60,
-                            "max": 3600,
+                            "min": 1,
+                            "max": 600,
                             "unit_of_measurement": "seconds",
                             "mode": "box",
                         }

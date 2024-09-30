@@ -4,6 +4,7 @@ from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.event import async_track_state_change
 
 from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
@@ -33,6 +34,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._config_entry = config_entry
         self._unique_id = f"sas_median_{sensor_hash}"
         self._sampling_size = sampling_size
+        self._update_interval = 1
 
         # If options flow is used to change the sampling size, it will override
         self._update_settings()
@@ -78,6 +80,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         return {
             "median_sampling_size": self._sampling_size,
+            "sensor_update_interval": self._update_interval,
             "input_unique_id": self._input_unique_id,
             "input_entity_id": self._input_entity_id,  # For debugging
             "unique_id": self._unique_id,
@@ -90,13 +93,21 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         }
 
     async def async_update(self):
-        """Update the sensor state based on the input sensor's value."""
+        """Manually trigger the sensor update."""
+        await self._handle_update()
 
-        # Ensure settings are reloaded if config is changed.
-        self._update_settings()
+    async def _handle_update(self, entity_id=None, old_state=None, new_state=None):
+        """Handle the sensor state update (for both manual and state change)."""
 
         # Get the current time
         now = datetime.now()
+
+        # Calculate the update interval to be used
+        if self._last_updated is not None:
+            self._update_interval = (datetime.fromisoformat(now.isoformat()) - datetime.fromisoformat(self._last_updated)).total_seconds()
+
+        # Ensure settings are reloaded if config is changed.
+        self._update_settings()
 
         # Check if the input_entity_id has been resolved from unique_id
         if not self._input_entity_id:
@@ -149,6 +160,9 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._last_updated = now.isoformat()
         self._update_count += 1
 
+        # Trigger an update in Home Assistant
+        self.async_write_ha_state()
+
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
 
@@ -190,8 +204,28 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 self._data_points = []
 
             self._last_updated = old_state.attributes.get("last_updated", None)
+            self._update_interval = old_state.attributes.get("update_interval", 1)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."
             )
+
+        # Check if the input_entity_id has been resolved from unique_id
+        if not self._input_entity_id:
+            _LOGGER.debug(f"Resolving entity_id for unique_id {self._input_unique_id}")
+            await self._resolve_input_entity_id()
+
+        # Continue if input_entity_id is available
+        if not self._input_entity_id:
+            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes.")
+            return
+
+        # Start listening for state changes of the input sensor
+        if self._input_entity_id:
+            _LOGGER.info(f"Starting to track state changes for entity_id {self._input_entity_id}")
+            async_track_state_change(
+                self.hass, self._input_entity_id, self._handle_update
+            )
+        else:
+            _LOGGER.error(f"Failed to track state changes, input_entity_id is not resolved.")
