@@ -128,8 +128,11 @@ In the configuration flow, you can customize:
 - **Input Sensor**: The raw sensor to be smoothed.
 - **Lowpass Time Constant**: Controls how quickly the lowpass filter smooths data (default: 15 seconds).
 - **Median Sampling Size**: Defines how many data points are used for the median calculation (default: 15).
-- **EMA Smoothing Window**: Defines the window for calculating the EMA (default: 300 seconds).
-- **Update Interval**: Defines how often the sensor updates (default: 5 seconds).
+- **EMA Desired Time to Reach 95% (seconds)**: Defines the time for the EMA sensor to reach 95% of the value from the input sensor EMA (default: 120 seconds).
+
+The EMA Desired Time to Reach 95% (seconds) parameter specifies how long it takes for the Exponential Moving Average (EMA) sensor to adjust and reach 95% of the input sensor’s value, based on the changes in input data. The default value of 120 seconds means that the EMA sensor will smooth the data in a way that it will adjust to 95% of the input sensor’s value within 120 seconds.
+
+This time is influenced by the update interval of the input sensor, and the formula we use for calculating the smoothing factor (alpha) ensures that within the desired time (e.g., 120 seconds), the EMA sensor will have captured 95% of the input sensor’s value.
 
 ---
 

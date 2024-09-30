@@ -3,16 +3,22 @@ from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.event import async_track_state_change
 
-from ..const import DEFAULT_EMA_WINDOW, DOMAIN, ICON, NAME
+from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def calculate_alpha(smoothing_window):
-    """Calculate alpha for Exponential Moving Average (EMA)"""
-    return 2 / (smoothing_window + 1)
+def calculate_alpha(desired_time_to_95, update_interval):
+    """Calculate alpha for Exponential Moving Average (EMA) based on smoothing window and update interval."""
+
+    # Calculate the number of updates in the smoothing window
+    number_of_updates_needed = desired_time_to_95 / update_interval
+
+    # Calculate alpha based on the number of updates needed
+    return 2 / (number_of_updates_needed + 1)
 
 
 def ema_filter(value, previous_value, alpha):
@@ -27,10 +33,10 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     _attr_icon = ICON
     _attr_has_entity_name = True
 
-    def __init__(self, input_unique_id, smoothing_window, sensor_hash, config_entry):
+    def __init__(self, input_unique_id, desired_time_to_95, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_unique_id = input_unique_id
-        self._smoothing_window = smoothing_window
+        self._desired_time_to_95 = desired_time_to_95
         self._sensor_hash = sensor_hash
         self._state = None
         self._previous_value = None
@@ -41,23 +47,24 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_ema_{sensor_hash}"
+        self._update_interval = 1
 
         # If options flow is used to change the sampling size, it will override
         self._update_settings()
 
-        # Calculate alpha once and store it
-        self._alpha = calculate_alpha(self._smoothing_window)
-
     def _update_settings(self):
         """Fetch updated settings from config_entry."""
-        self._smoothing_window = self._config_entry.options.get(
-            "ema_smoothing_window", DEFAULT_EMA_WINDOW
+        self._desired_time_to_95 = self._config_entry.options.get(
+            "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
         )
-        self._alpha = calculate_alpha(self._smoothing_window)
+
+        # Recalculate alpha based on the new settings
+        if self._update_interval is not None:
+            self._alpha = calculate_alpha(self._desired_time_to_95, self._update_interval)
 
         # Log updated settings
         _LOGGER.debug(
-            f"Updated EMA settings: smoothing_window={self._smoothing_window}, alpha={self._alpha}"
+            f"Updated EMA settings: desired_time_to_95={self._desired_time_to_95}, _update_interval={self._update_interval}, alpha={self._alpha}"
         )
 
     @property
@@ -85,25 +92,35 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
 
         return {
-            "ema_smoothing_window": self._smoothing_window,
+            "desired_time_to_95": self._desired_time_to_95,
+            "sensor_update_interval": self._update_interval,
+            "number_of_updates_needed": self._desired_time_to_95 / self._update_interval,
+            "alpha": self._alpha,
+            "previous_value": self._previous_value,
             "input_unique_id": self._input_unique_id,
             "input_entity_id": self._input_entity_id,
             "unique_id": self._unique_id,
             "sensor_hash": self._sensor_hash,
             "last_updated": self._last_updated,
             "update_count": self._update_count,
-            "previous_value": self._previous_value,
-            "alpha": self._alpha,
         }
 
     async def async_update(self):
-        """Update the sensor state based on the input sensor's value."""
+        """Manually trigger the sensor update."""
+        await self._handle_update()
 
-        # Ensure settings are reloaded if config is changed.
-        self._update_settings()
+    async def _handle_update(self, entity_id=None, old_state=None, new_state=None):
+        """Handle the sensor state update (for both manual and state change)."""
 
         # Get the current time
         now = datetime.now()
+
+        # Calculate the update interval to be used
+        if self._last_updated is not None:
+            self._update_interval = (datetime.fromisoformat(now.isoformat()) - datetime.fromisoformat(self._last_updated)).total_seconds()
+
+        # Ensure settings are reloaded if config is changed.
+        self._update_settings()
 
         # Check if the input_entity_id has been resolved from unique_id
         if not self._input_entity_id:
@@ -148,6 +165,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._last_updated = now.isoformat()
         self._update_count += 1
 
+        # Trigger an update in Home Assistant
+        self.async_write_ha_state()
+
     async def _resolve_input_entity_id(self):
         """Resolve the entity_id from the unique_id using entity_registry."""
 
@@ -189,8 +209,28 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
                 self._previous_value = None
 
             self._last_updated = old_state.attributes.get("last_updated", None)
+            self._update_interval = old_state.attributes.get("update_interval", 1)
             self._update_count = old_state.attributes.get("update_count", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."
             )
+
+        # Check if the input_entity_id has been resolved from unique_id
+        if not self._input_entity_id:
+            _LOGGER.debug(f"Resolving entity_id for unique_id {self._input_unique_id}")
+            await self._resolve_input_entity_id()
+
+        # Continue if input_entity_id is available
+        if not self._input_entity_id:
+            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes.")
+            return
+
+        # Start listening for state changes of the input sensor
+        if self._input_entity_id:
+            _LOGGER.info(f"Starting to track state changes for entity_id {self._input_entity_id}")
+            async_track_state_change(
+                self.hass, self._input_entity_id, self._handle_update
+            )
+        else:
+            _LOGGER.error(f"Failed to track state changes, input_entity_id is not resolved.")
