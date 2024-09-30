@@ -1,7 +1,12 @@
 import hashlib
 import logging
 
-from .const import DEFAULT_EMA_DESIRED_TIME_TO_95, DEFAULT_LOW_PASS, DEFAULT_MEDIAN_SIZE, DOMAIN
+from .const import (
+    DEFAULT_EMA_DESIRED_TIME_TO_95,
+    DEFAULT_LOW_PASS,
+    DEFAULT_MEDIAN_SIZE,
+    DOMAIN,
+)
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
@@ -49,9 +54,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     median_sensor = MedianSensor(
         median_unique_id, median_sampling_size, sensor_hash, config_entry
     )
-    ema_sensor = EmaSensor(
-        ema_unique_id, desired_time_to_95, sensor_hash, config_entry
-    )
+    ema_sensor = EmaSensor(ema_unique_id, desired_time_to_95, sensor_hash, config_entry)
 
     # Add sensors to Home Assistant
     async_add_entities([lowpass_sensor, median_sensor, ema_sensor])

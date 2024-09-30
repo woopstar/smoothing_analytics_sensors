@@ -2,8 +2,8 @@ import logging
 from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
@@ -60,7 +60,9 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Recalculate alpha based on the new settings
         if self._update_interval is not None:
-            self._alpha = calculate_alpha(self._desired_time_to_95, self._update_interval)
+            self._alpha = calculate_alpha(
+                self._desired_time_to_95, self._update_interval
+            )
 
         # Log updated settings
         _LOGGER.debug(
@@ -94,7 +96,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         return {
             "desired_time_to_95": self._desired_time_to_95,
             "sensor_update_interval": self._update_interval,
-            "number_of_updates_needed": self._desired_time_to_95 / self._update_interval,
+            "number_of_updates_needed": self._desired_time_to_95
+            / self._update_interval,
             "alpha": self._alpha,
             "previous_value": self._previous_value,
             "input_unique_id": self._input_unique_id,
@@ -117,7 +120,10 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Calculate the update interval to be used
         if self._last_updated is not None:
-            self._update_interval = (datetime.fromisoformat(now.isoformat()) - datetime.fromisoformat(self._last_updated)).total_seconds()
+            self._update_interval = (
+                datetime.fromisoformat(now.isoformat())
+                - datetime.fromisoformat(self._last_updated)
+            ).total_seconds()
 
         # Ensure settings are reloaded if config is changed.
         self._update_settings()
@@ -223,14 +229,20 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Continue if input_entity_id is available
         if not self._input_entity_id:
-            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes.")
+            _LOGGER.warning(
+                f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes."
+            )
             return
 
         # Start listening for state changes of the input sensor
         if self._input_entity_id:
-            _LOGGER.info(f"Starting to track state changes for entity_id {self._input_entity_id}")
+            _LOGGER.info(
+                f"Starting to track state changes for entity_id {self._input_entity_id}"
+            )
             async_track_state_change(
                 self.hass, self._input_entity_id, self._handle_update
             )
         else:
-            _LOGGER.error(f"Failed to track state changes, input_entity_id is not resolved.")
+            _LOGGER.error(
+                f"Failed to track state changes, input_entity_id is not resolved."
+            )

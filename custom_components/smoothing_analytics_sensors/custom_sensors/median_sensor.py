@@ -3,8 +3,8 @@ import statistics
 from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
@@ -104,7 +104,10 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Calculate the update interval to be used
         if self._last_updated is not None:
-            self._update_interval = (datetime.fromisoformat(now.isoformat()) - datetime.fromisoformat(self._last_updated)).total_seconds()
+            self._update_interval = (
+                datetime.fromisoformat(now.isoformat())
+                - datetime.fromisoformat(self._last_updated)
+            ).total_seconds()
 
         # Ensure settings are reloaded if config is changed.
         self._update_settings()
@@ -218,14 +221,20 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Continue if input_entity_id is available
         if not self._input_entity_id:
-            _LOGGER.warning(f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes.")
+            _LOGGER.warning(
+                f"Entity with unique_id {self._input_unique_id} not found. Unable to track state changes."
+            )
             return
 
         # Start listening for state changes of the input sensor
         if self._input_entity_id:
-            _LOGGER.info(f"Starting to track state changes for entity_id {self._input_entity_id}")
+            _LOGGER.info(
+                f"Starting to track state changes for entity_id {self._input_entity_id}"
+            )
             async_track_state_change(
                 self.hass, self._input_entity_id, self._handle_update
             )
         else:
-            _LOGGER.error(f"Failed to track state changes, input_entity_id is not resolved.")
+            _LOGGER.error(
+                f"Failed to track state changes, input_entity_id is not resolved."
+            )
