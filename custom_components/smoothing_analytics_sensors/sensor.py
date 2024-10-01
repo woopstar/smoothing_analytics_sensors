@@ -30,12 +30,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Extract configuration parameters
     input_sensor = config.get("input_sensor")
+
     lowpass_time_constant = get_config_value(
         config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS
     )
+
     median_sampling_size = get_config_value(
         config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE
     )
+
     desired_time_to_95 = get_config_value(
         config_entry, "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
     )
@@ -51,9 +54,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     lowpass_sensor = LowpassSensor(
         input_sensor, lowpass_time_constant, sensor_hash, config_entry
     )
+
     median_sensor = MedianSensor(
         median_unique_id, median_sampling_size, sensor_hash, config_entry
     )
+
     ema_sensor = EmaSensor(ema_unique_id, desired_time_to_95, sensor_hash, config_entry)
 
     # Add sensors to Home Assistant

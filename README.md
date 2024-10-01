@@ -88,8 +88,7 @@ The final smoothing step applies an Exponential Moving Average to the median-fil
 
 - **Purpose**: Applies final smoothing, focusing on recent data trends.
 - **Smoothing Window**: 300 seconds (5 minutes).
-- **Alpha Calculation**:
-  Alpha is calculated using the following formula:
+- **Alpha Calculation**: Alpha is calculated using the following formula:
 
   ```yaml
   alpha = 2 / (smoothing_window_seconds + 1)
@@ -166,17 +165,24 @@ time = np.arange(0, 100, 1)
 raw_data = np.sin(time * 0.2) + np.random.normal(0, 0.5, len(time)) + (np.random.choice([0, 3], size=len(time), p=[0.95, 0.05]))
 
 # Apply Lowpass Filter
-def lowpass_filter(data, alpha=0.2):
-    filtered_data = np.zeros_like(data)
-    filtered_data[0] = data[0]
-    for t in range(1, len(data)):
-        filtered_data[t] = alpha * data[t] + (1 - alpha) * filtered_data[t - 1]
-    return filtered_data
+ def lowpass_filter(data, time_constant=15):
+     filtered_data = np.zeros_like(data)
+     filtered_data[0] = data[0]
 
-lowpass_data = lowpass_filter(raw_data, alpha=0.2)
+     # Calculate coefficients A and B based on the time constant
+     B = 1.0 / time_constant
+     A = 1.0 - B
+
+     # Apply lowpass filter across the dataset
+     for t in range(1, len(data)):
+         filtered_data[t] = A * filtered_data[t - 1] + B * data[t]
+
+     return filtered_data
+
+ lowpass_data = lowpass_filter(raw_data)
 
 # Apply Moving Median Filter
-def moving_median_filter(data, window_size=5):
+def moving_median_filter(data, window_size=15):
     filtered_data = np.zeros_like(data)
     for t in range(len(data)):
         filtered_data[t] = np.median(data[max(0, t - window_size + 1):t + 1])
