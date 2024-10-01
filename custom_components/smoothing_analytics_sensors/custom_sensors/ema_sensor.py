@@ -25,6 +25,7 @@ def ema_filter(value, previous_value, alpha):
     """Apply Exponential Moving Average (EMA) filter using the given alpha"""
     return alpha * value + (1 - alpha) * previous_value
 
+
 class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Exponential Moving Average (EMA) filtered sensor with persistent state and device support, based on unique_id."""
 
@@ -95,7 +96,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "input_entity_id": self._input_entity_id,
             "input_unique_id": self._input_unique_id,
             "last_updated": self._last_updated,
-            "number_of_updates_needed": self._desired_time_to_95 / self._update_interval,
+            "number_of_updates_needed": self._desired_time_to_95
+            / self._update_interval,
             "previous_value": self._previous_value,
             "sensor_hash": self._sensor_hash,
             "sensor_update_interval": self._update_interval,

@@ -11,6 +11,7 @@ from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Median filtered sensor with persistent state and device support, based on unique_id."""
 

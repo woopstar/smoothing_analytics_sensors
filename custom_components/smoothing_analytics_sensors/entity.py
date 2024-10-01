@@ -34,8 +34,6 @@ class SmoothingAnalyticsEntity(Entity):
 
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get(
-                "device_name", NAME
-            ),
+            "name": self.config_entry.data.get("device_name", NAME),
             "manufacturer": NAME,
         }

@@ -10,6 +10,7 @@ from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def lowpass_filter(current_value, previous_value, time_constant):
     """Apply a lowpass filter to smooth out fast fluctuations"""
     B = 1.0 / time_constant

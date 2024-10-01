@@ -116,9 +116,7 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
             {
                 vol.Optional(
                     "device_name",
-                    default=self.config_entry.options.get(
-                        "device_name", NAME
-                    ),
+                    default=self.config_entry.options.get("device_name", NAME),
                 ): str,
                 vol.Optional(
                     "lowpass_time_constant",
