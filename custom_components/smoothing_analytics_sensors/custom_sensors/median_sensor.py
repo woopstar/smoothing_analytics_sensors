@@ -11,7 +11,6 @@ from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Median filtered sensor with persistent state and device support, based on unique_id."""
 
@@ -26,7 +25,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._state = None
         self._data_points = []
         self._last_updated = None
-        self._update_count = 0
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
@@ -34,8 +32,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unique_id = f"sas_median_{sensor_hash}"
         self._sampling_size = sampling_size
         self._update_interval = 1
-
-        # If options flow is used to change the sampling size, it will override
         self._update_settings()
 
     def _update_settings(self):
@@ -78,17 +74,17 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         missing_data_points = max(0, self._sampling_size - data_points_count)
 
         return {
-            "median_sampling_size": self._sampling_size,
-            "sensor_update_interval": self._update_interval,
-            "input_unique_id": self._input_unique_id,
-            "input_entity_id": self._input_entity_id,  # For debugging
-            "unique_id": self._unique_id,
-            "sensor_hash": self._sensor_hash,
-            "last_updated": self._last_updated,
-            "update_count": self._update_count,
-            "data_points_count": data_points_count,
-            "missing_data_points": missing_data_points,
             "data_points": self._data_points,
+            "data_points_count": data_points_count,
+            "input_entity_id": self._input_entity_id,
+            "input_unique_id": self._input_unique_id,
+            "last_updated": self._last_updated,
+            "median_sampling_size": self._sampling_size,
+            "missing_data_points": missing_data_points,
+            "sensor_hash": self._sensor_hash,
+            "sensor_update_interval": self._update_interval,
+            "type:": "moving_median",
+            "unique_id": self._unique_id,
         }
 
     async def async_update(self):
@@ -159,7 +155,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Update count and last update time
         self._last_updated = now.isoformat()
-        self._update_count += 1
 
         # Trigger an update in Home Assistant
         self.async_write_ha_state()
@@ -206,7 +201,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_interval = old_state.attributes.get("update_interval", 1)
-            self._update_count = old_state.attributes.get("update_count", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."

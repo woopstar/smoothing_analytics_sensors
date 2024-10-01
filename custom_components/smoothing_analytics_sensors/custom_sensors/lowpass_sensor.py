@@ -10,7 +10,6 @@ from ..entity import SmoothingAnalyticsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-
 def lowpass_filter(current_value, previous_value, time_constant):
     """Apply a lowpass filter to smooth out fast fluctuations"""
     B = 1.0 / time_constant
@@ -33,15 +32,12 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._sensor_hash = sensor_hash
         self._state = None
         self._previous_value = None
-        self._update_count = 0
         self._last_updated = None
         self._unit_of_measurement = None
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_lowpass_{sensor_hash}"
         self._update_interval = 1
-
-        # If options flow is used to change the sampling size, it will override
         self._update_settings()
 
     def _update_settings(self):
@@ -78,14 +74,14 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
 
         return {
-            "lowpass_time_constant": self._time_constant,
-            "sensor_update_interval": self._update_interval,
             "input_sensor": self._input_sensor,
-            "unique_id": self._unique_id,
-            "sensor_hash": self._sensor_hash,
             "last_updated": self._last_updated,
-            "update_count": self._update_count,
+            "lowpass_time_constant": self._time_constant,
             "previous_value": self._previous_value,
+            "sensor_hash": self._sensor_hash,
+            "sensor_update_interval": self._update_interval,
+            "type:": "lowpass",
+            "unique_id": self._unique_id,
         }
 
     async def _handle_update(self, event):
@@ -133,7 +129,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             self._state = input_value
 
         # Update count and last update time
-        self._update_count += 1
         self._last_updated = now.isoformat()
 
         # Trigger an update in Home Assistant
@@ -162,7 +157,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_interval = old_state.attributes.get("update_interval", 1)
-            self._update_count = old_state.attributes.get("update_count", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."

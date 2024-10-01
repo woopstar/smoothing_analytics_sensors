@@ -10,6 +10,7 @@ from .const import (
     DEFAULT_LOW_PASS,
     DEFAULT_MEDIAN_SIZE,
     DOMAIN,
+    NAME,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 # Create the configuration with device_name as title
                 return self.async_create_entry(
-                    title=user_input.get("device_name", "Smoothing Analytics Device"),
+                    title=user_input.get("device_name", NAME),
                     data=user_input,
                 )
 
@@ -42,7 +43,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("input_sensor"): selector(
                     {"entity": {"domain": "sensor"}}
                 ),
-                vol.Optional("device_name", default="Smoothing Analytics Device"): str,
+                vol.Optional("device_name", default=NAME): str,
                 vol.Optional(
                     "lowpass_time_constant", default=DEFAULT_LOW_PASS
                 ): selector(
@@ -116,7 +117,7 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(
                     "device_name",
                     default=self.config_entry.options.get(
-                        "device_name", "Smoothing Analytics Device"
+                        "device_name", NAME
                     ),
                 ): str,
                 vol.Optional(
