@@ -2,7 +2,7 @@ import logging
 
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, ICON, NAME  # Import constants
+from .const import DOMAIN, ICON, NAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class SmoothingAnalyticsEntity(Entity):
 
     def __init__(self, config_entry):
         """Initialize the Smoothing Analytics Entity"""
-        super().__init__()  # Ensure the Entity class is correctly initialized
+        super().__init__()
         self.config_entry = config_entry
 
     def set_entity_id(self, platform_str, key):
