@@ -25,7 +25,6 @@ def ema_filter(value, previous_value, alpha):
     """Apply Exponential Moving Average (EMA) filter using the given alpha"""
     return alpha * value + (1 - alpha) * previous_value
 
-
 class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     """Exponential Moving Average (EMA) filtered sensor with persistent state and device support, based on unique_id."""
 
@@ -41,15 +40,12 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._state = None
         self._previous_value = None
         self._last_updated = None
-        self._update_count = 0
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
         self._config_entry = config_entry
         self._unique_id = f"sas_ema_{sensor_hash}"
         self._update_interval = 1
-
-        # If options flow is used to change the sampling size, it will override
         self._update_settings()
 
     def _update_settings(self):
@@ -94,18 +90,17 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Return the state attributes."""
 
         return {
-            "desired_time_to_95": self._desired_time_to_95,
-            "sensor_update_interval": self._update_interval,
-            "number_of_updates_needed": self._desired_time_to_95
-            / self._update_interval,
             "alpha": self._alpha,
-            "previous_value": self._previous_value,
-            "input_unique_id": self._input_unique_id,
+            "desired_time_to_95": self._desired_time_to_95,
             "input_entity_id": self._input_entity_id,
-            "unique_id": self._unique_id,
-            "sensor_hash": self._sensor_hash,
+            "input_unique_id": self._input_unique_id,
             "last_updated": self._last_updated,
-            "update_count": self._update_count,
+            "number_of_updates_needed": self._desired_time_to_95 / self._update_interval,
+            "previous_value": self._previous_value,
+            "sensor_hash": self._sensor_hash,
+            "sensor_update_interval": self._update_interval,
+            "type:": "ema",
+            "unique_id": self._unique_id,
         }
 
     async def async_update(self):
@@ -169,7 +164,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
         # Update count and last update time
         self._last_updated = now.isoformat()
-        self._update_count += 1
 
         # Trigger an update in Home Assistant
         self.async_write_ha_state()
@@ -216,7 +210,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
             self._last_updated = old_state.attributes.get("last_updated", None)
             self._update_interval = old_state.attributes.get("update_interval", 1)
-            self._update_count = old_state.attributes.get("update_count", 0)
         else:
             _LOGGER.info(
                 f"No previous state found for {self._unique_id}, starting fresh."
