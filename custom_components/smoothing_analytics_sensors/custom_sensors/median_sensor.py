@@ -93,7 +93,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_update(self):
         """Manually trigger the sensor update."""
-        await self._handle_update()
+        await self._handle_update(event=None)
 
     async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""

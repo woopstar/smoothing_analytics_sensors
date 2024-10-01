@@ -141,7 +141,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_update(self):
         """Manually trigger the sensor update."""
-        await self._handle_update(None)
+        await self._handle_update(event=None)
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
