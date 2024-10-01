@@ -2,8 +2,8 @@ import logging
 import statistics
 from datetime import datetime
 
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_state_change
+from homeassistant.helpers import entity_registry
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON, NAME
@@ -22,7 +22,6 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
         super().__init__(config_entry)
         self._input_unique_id = input_unique_id
-        # self._sampling_size = sampling_size
         self._sensor_hash = sensor_hash
         self._state = None
         self._data_points = []
@@ -96,7 +95,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Manually trigger the sensor update."""
         await self._handle_update()
 
-    async def _handle_update(self, entity_id=None, old_state=None, new_state=None):
+    async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
 
         # Get the current time
@@ -105,8 +104,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Calculate the update interval to be used
         if self._last_updated is not None:
             self._update_interval = (
-                datetime.fromisoformat(now.isoformat())
-                - datetime.fromisoformat(self._last_updated)
+                now - datetime.fromisoformat(self._last_updated)
             ).total_seconds()
 
         # Ensure settings are reloaded if config is changed.
@@ -170,7 +168,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Resolve the entity_id from the unique_id using entity_registry."""
 
         # Resolve the entity_id from the unique_id
-        registry = er.async_get(self.hass)
+        registry = entity_registry.async_get(self.hass)
 
         # Fetch the entity_id from the unique_id
         entry = registry.async_get_entity_id("sensor", DOMAIN, self._input_unique_id)
@@ -231,8 +229,8 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.info(
                 f"Starting to track state changes for entity_id {self._input_entity_id}"
             )
-            async_track_state_change(
-                self.hass, self._input_entity_id, self._handle_update
+            async_track_state_change_event(
+                self.hass, [self._input_entity_id], self._handle_update
             )
         else:
             _LOGGER.error(

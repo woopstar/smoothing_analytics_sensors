@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_state_change
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON, NAME
@@ -112,7 +112,7 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         """Manually trigger the sensor update."""
         await self._handle_update()
 
-    async def _handle_update(self, entity_id=None, old_state=None, new_state=None):
+    async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
 
         # Get the current time
@@ -121,8 +121,7 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Calculate the update interval to be used
         if self._last_updated is not None:
             self._update_interval = (
-                datetime.fromisoformat(now.isoformat())
-                - datetime.fromisoformat(self._last_updated)
+                now - datetime.fromisoformat(self._last_updated)
             ).total_seconds()
 
         # Ensure settings are reloaded if config is changed.
@@ -239,8 +238,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.info(
                 f"Starting to track state changes for entity_id {self._input_entity_id}"
             )
-            async_track_state_change(
-                self.hass, self._input_entity_id, self._handle_update
+            async_track_state_change_event(
+                self.hass, [self._input_entity_id], self._handle_update
             )
         else:
             _LOGGER.error(
