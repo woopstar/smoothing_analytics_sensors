@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
 
-from homeassistant.helpers.event import async_track_state_change
+# Importer den nye funktion
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_LOW_PASS, DOMAIN, ICON, NAME
@@ -10,11 +11,11 @@ from ..entity import SmoothingAnalyticsEntity
 _LOGGER = logging.getLogger(__name__)
 
 def lowpass_filter(current_value, previous_value, time_constant):
-     """Apply a lowpass filter to smooth out fast fluctuations"""
-     B = 1.0 / time_constant
-     A = 1.0 - B
+    """Apply a lowpass filter to smooth out fast fluctuations"""
+    B = 1.0 / time_constant
+    A = 1.0 - B
 
-     return A * previous_value + B * current_value
+    return A * previous_value + B * current_value
 
 
 class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
@@ -83,7 +84,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "unique_id": self._unique_id,
         }
 
-    async def _handle_update(self, entity_id=None, old_state=None, new_state=None):
+    async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
 
         # Get the current time
@@ -135,7 +136,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     async def async_update(self):
         """Manually trigger the sensor update."""
-        await self._handle_update()
+        await self._handle_update(event=None)
 
     async def async_added_to_hass(self):
         """Handle the sensor being added to Home Assistant."""
@@ -166,7 +167,9 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.info(
                 f"Starting to track state changes for entity_id {self._input_sensor}"
             )
-            async_track_state_change(self.hass, self._input_sensor, self._handle_update)
+            async_track_state_change_event(
+                self.hass, [self._input_sensor], self._handle_update
+            )
         else:
             _LOGGER.error(
                 f"Failed to track state changes, input_sensor is not resolved."
