@@ -101,7 +101,7 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "previous_value": self._previous_value,
             "sensor_hash": self._sensor_hash,
             "sensor_update_interval": self._update_interval,
-            "type:": "ema",
+            "type": "ema",
             "unique_id": self._unique_id,
         }
 

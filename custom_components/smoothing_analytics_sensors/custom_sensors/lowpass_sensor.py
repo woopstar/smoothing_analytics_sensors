@@ -81,7 +81,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "previous_value": self._previous_value,
             "sensor_hash": self._sensor_hash,
             "sensor_update_interval": self._update_interval,
-            "type:": "lowpass",
+            "type": "lowpass",
             "unique_id": self._unique_id,
         }
 
