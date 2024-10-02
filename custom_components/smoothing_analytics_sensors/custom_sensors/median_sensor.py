@@ -84,7 +84,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             "missing_data_points": missing_data_points,
             "sensor_hash": self._sensor_hash,
             "sensor_update_interval": self._update_interval,
-            "type:": "moving_median",
+            "type": "moving_median",
             "unique_id": self._unique_id,
         }
 
