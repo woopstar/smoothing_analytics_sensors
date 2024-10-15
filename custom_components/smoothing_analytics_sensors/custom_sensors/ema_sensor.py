@@ -5,8 +5,13 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
+from ..const import (
+    DEFAULT_EMA_DESIRED_TIME_TO_95,
+    DOMAIN,
+    ICON
+)
+
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -50,16 +50,19 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     median_unique_id = f"sas_lowpass_{sensor_hash}"
     ema_unique_id = f"sas_median_{sensor_hash}"
 
-    # Create the lowpass, median, and ema sensors using the unique IDs
+    # Create the lowpass from the input sensor
     lowpass_sensor = LowpassSensor(
         input_sensor, lowpass_time_constant, sensor_hash, config_entry
     )
 
+    # Create the median, and ema sensors using the unique IDs
     median_sensor = MedianSensor(
         median_unique_id, median_sampling_size, sensor_hash, config_entry
     )
 
-    ema_sensor = EmaSensor(ema_unique_id, desired_time_to_95, sensor_hash, config_entry)
+    ema_sensor = EmaSensor(
+        ema_unique_id, desired_time_to_95, sensor_hash, config_entry
+    )
 
     # Add sensors to Home Assistant
     async_add_entities([lowpass_sensor, median_sensor, ema_sensor])
