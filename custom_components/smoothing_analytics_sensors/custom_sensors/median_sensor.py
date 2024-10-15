@@ -6,8 +6,12 @@ from homeassistant.helpers import entity_registry
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON, NAME
 from ..entity import SmoothingAnalyticsEntity
+from ..const import (
+    DEFAULT_MEDIAN_SIZE,
+    DOMAIN,
+    ICON
+)
 
 _LOGGER = logging.getLogger(__name__)
 
