@@ -2,6 +2,8 @@
 
 [![Current Release](https://img.shields.io/github/release/woopstar/smoothing_analytics_sensors/all.svg?style=plastic)](https://github.com/woopstar/smoothing_analytics_sensors/releases) [![Github All Releases](https://img.shields.io/github/downloads/woopstar/smoothing_analytics_sensors/total.svg?style=plastic)](https://github.com/woopstar/smoothing_analytics_sensors/releases)
 
+![Smoothing Analytics Sensors](assets/icon.png)
+
 The **Smoothing Analytics Sensors** integration is designed to smooth out short-term data spikes from any input sensor. It works by applying a series of filters (lowpass, moving median, and EMA) to the raw sensor data, ensuring that brief but significant changes do not heavily impact the final sensor reading.
 
 ## Derived from the Huawei Solar Battery Optimization Project
