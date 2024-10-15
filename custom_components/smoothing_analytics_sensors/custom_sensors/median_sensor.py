@@ -29,6 +29,8 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._input_entity_id = None
         self._unit_of_measurement = None
         self._device_class = None
+        self._state_class = None
+        self._last_reset = None
         self._config_entry = config_entry
         self._unique_id = f"sas_median_{sensor_hash}"
         self._sampling_size = sampling_size
@@ -63,6 +65,14 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
     @property
     def device_class(self):
         return self._device_class
+
+    @property
+    def state_class(self):
+        return self._state_class
+
+    @property
+    def last_reset(self):
+        return self._last_reset
 
     @property
     def extra_state_attributes(self):
@@ -134,6 +144,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
         # Fetch unit_of_measurement and device_class from the input sensor
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
         self._device_class = input_state.attributes.get("device_class")
+        self._state_class = input_state.attributes.get("state_class")
 
         # Append the current value to the list of data points
         if len(self._data_points) > 0:
