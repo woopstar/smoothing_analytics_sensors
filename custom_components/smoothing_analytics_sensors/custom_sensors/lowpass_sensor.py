@@ -118,7 +118,7 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         try:
             input_value = float(input_state.state)
         except ValueError:
-            _LOGGER.error(
+            _LOGGER.warning(
                 f"Invalid value from {self._input_sensor}: {input_state.state}"
             )
             return

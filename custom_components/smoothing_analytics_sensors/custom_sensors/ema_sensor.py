@@ -153,7 +153,7 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         try:
             input_value = float(input_state.state)
         except ValueError:
-            _LOGGER.error(
+            _LOGGER.warning(
                 f"Invalid value from {self._input_entity_id}: {input_state.state}"
             )
             return
