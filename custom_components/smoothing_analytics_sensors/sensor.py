@@ -1,4 +1,3 @@
-import hashlib
 import logging
 
 from .const import (
@@ -10,19 +9,9 @@ from .const import (
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
+from .utils.misc import get_config_value, generate_md5_hash
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def generate_md5_hash(input_sensor):
-    """Generate an MD5 hash based on the input sensor's name."""
-    return hashlib.md5(input_sensor.encode("utf-8")).hexdigest()
-
-
-def get_config_value(config_entry, key, default_value):
-    """Get the configuration value from options or fall back to the initial data."""
-    return config_entry.options.get(key, config_entry.data.get(key, default_value))
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
