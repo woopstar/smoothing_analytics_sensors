@@ -6,6 +6,7 @@ from homeassistant.helpers import entity_registry
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from ..utils.misc import async_resolve_entity_id_from_unique_id, get_config_value
 from ..entity import SmoothingAnalyticsEntity
 from ..const import (
     DEFAULT_MEDIAN_SIZE,
@@ -43,7 +44,7 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
-        self._sampling_size = self._config_entry.options.get(
+        self._sampling_size = get_config_value(self._config_entry,
             "median_sampling_size", DEFAULT_MEDIAN_SIZE
         )
 
