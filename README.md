@@ -1,8 +1,11 @@
 # Smoothing Analytics Sensors
 
-[![Current Release](https://img.shields.io/github/release/woopstar/smoothing_analytics_sensors/all.svg?style=plastic)](https://github.com/woopstar/smoothing_analytics_sensors/releases) [![Github All Releases](https://img.shields.io/github/downloads/woopstar/smoothing_analytics_sensors/total.svg?style=plastic)](https://github.com/woopstar/smoothing_analytics_sensors/releases)
+[![GitHub Release][releases-shield]][releases]
+[![GitHub Downloads][downloads-shield]][downloads]
+[![License][license-shield]][license]
+[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-![Smoothing Analytics Sensors](assets/icon.png)
+![Icon](assets/icon.png)
 
 The **Smoothing Analytics Sensors** integration is designed to smooth out short-term data spikes from any input sensor. It works by applying a series of filters (lowpass, moving median, and EMA) to the raw sensor data, ensuring that brief but significant changes do not heavily impact the final sensor reading.
 
@@ -223,3 +226,12 @@ plt.show()
 ---
 
 **Smoothing Analytics Sensors** provides a flexible, reliable way to smooth data, making it especially useful for real-time monitoring environments. The combination of lowpass, median, and exponential moving average filtering ensures that both short-term fluctuations and long-term trends are accurately tracked.
+
+[releases-shield]: https://img.shields.io/github/v/release/woopstar/smoothing_analytics_sensors?style=for-the-badge
+[releases]: https://github.com/woopstar/smoothing_analytics_sensors/releases
+[downloads-shield]: https://img.shields.io/github/downloads/woopstar/smoothing_analytics_sensors/total.svg?style=for-the-badge
+[downloads]: https://github.com/woopstar/smoothing_analytics_sensors/releases
+[license-shield]: https://img.shields.io/github/license/woopstar/smoothing_analytics_sensors?style=for-the-badge
+[license]: https://github.com/woopstar/smoothing_analytics_sensors/blob/main/LICENSE
+[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-FFDD00.svg?style=for-the-badge&logo=buymeacoffee
+[buymecoffee]: https://www.buymeacoffee.com/woopstar
