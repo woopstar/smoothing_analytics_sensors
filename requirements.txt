@@ -1,2 +1,2 @@
 voluptuous==0.15.2
-pytz==2024.2
+pytz==2025.2
