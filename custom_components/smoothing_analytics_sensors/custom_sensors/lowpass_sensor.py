@@ -5,12 +5,9 @@ from datetime import datetime
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..utils.misc import get_config_value
+from ..const import DEFAULT_LOW_PASS, ICON
 from ..entity import SmoothingAnalyticsEntity
-from ..const import (
-    DEFAULT_LOW_PASS,
-    ICON
-)
+from ..utils.misc import get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,8 +46,8 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
-        self._time_constant = get_config_value(self._config_entry,
-            "lowpass_time_constant", DEFAULT_LOW_PASS
+        self._time_constant = get_config_value(
+            self._config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS
         )
 
         # Log updated settings

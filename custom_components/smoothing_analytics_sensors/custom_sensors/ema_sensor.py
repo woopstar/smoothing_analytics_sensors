@@ -5,14 +5,9 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..utils.misc import async_resolve_entity_id_from_unique_id, get_config_value
+from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON
 from ..entity import SmoothingAnalyticsEntity
-from ..const import (
-    DEFAULT_EMA_DESIRED_TIME_TO_95,
-    DOMAIN,
-    ICON
-)
-
+from ..utils.misc import async_resolve_entity_id_from_unique_id, get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,8 +54,8 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry."""
-        self._desired_time_to_95 = get_config_value(self._config_entry,
-            "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
+        self._desired_time_to_95 = get_config_value(
+            self._config_entry, "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
         )
 
         # Recalculate alpha based on the new settings

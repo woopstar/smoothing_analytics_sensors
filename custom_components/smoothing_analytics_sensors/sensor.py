@@ -9,9 +9,10 @@ from .const import (
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
 from .custom_sensors.median_sensor import MedianSensor
-from .utils.misc import get_config_value, generate_md5_hash
+from .utils.misc import generate_md5_hash, get_config_value
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
@@ -49,9 +50,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         median_unique_id, median_sampling_size, sensor_hash, config_entry
     )
 
-    ema_sensor = EmaSensor(
-        ema_unique_id, desired_time_to_95, sensor_hash, config_entry
-    )
+    ema_sensor = EmaSensor(ema_unique_id, desired_time_to_95, sensor_hash, config_entry)
 
     # Add sensors to Home Assistant
     async_add_entities([lowpass_sensor, median_sensor, ema_sensor])
