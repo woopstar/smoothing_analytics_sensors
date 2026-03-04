@@ -1,2 +1,2 @@
 voluptuous==0.15.2
-pytz==2025.2
+pytz==2026.1.post1
