@@ -14,6 +14,16 @@ class EmaSensor(SmoothingAnalyticsSensor):
     """Exponential Moving Average (EMA) filtered sensor with persistent state and device support, based on unique_id."""
 
     _type = "ema"
+    # Fast-changing attributes stay out of the database
+    _unrecorded_attributes = frozenset(
+        {
+            "alpha",
+            "last_updated",
+            "number_of_updates_needed",
+            "previous_value",
+            "sensor_update_interval",
+        }
+    )
     _name_prefix = "EMA Filtered Sensor"
 
     def __init__(self, input_unique_id, desired_time_to_95, sensor_hash, config_entry):

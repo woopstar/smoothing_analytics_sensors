@@ -34,6 +34,15 @@ Because the unit and device class are standard, Home Assistant also converts uni
 
 ## Attributes
 
+Attributes that change on every update are not stored in the recorder database. They are still
+visible in the UI and restored after a restart.
+
+| Stage   | Not recorded                                                                                        |
+| ------- | --------------------------------------------------------------------------------------------------- |
+| Lowpass | `last_updated`, `previous_value`, `sensor_update_interval`                                          |
+| Median  | `data_points`, `data_points_count`, `last_updated`, `missing_data_points`, `sensor_update_interval` |
+| EMA     | `alpha`, `last_updated`, `number_of_updates_needed`, `previous_value`, `sensor_update_interval`     |
+
 ### Lowpass
 
 | Attribute                | Meaning                              |
