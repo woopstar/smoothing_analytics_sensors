@@ -79,6 +79,22 @@ class SmoothingAnalyticsSensor(RestoreSensor):
     def _reset_extra(self):
         """Reset stage-specific values when the restored state is invalid."""
 
+    def diagnostics(self):
+        """Return the internal state for config entry diagnostics."""
+        return {
+            "entity_id": self.entity_id,
+            "unique_id": self.unique_id,
+            "available": self.available,
+            "value": self._state,
+            "input_entity_id": self._input_entity_id,
+            "input_unique_id": self._input_unique_id,
+            "last_updated": self._last_updated,
+            "update_interval": self._update_interval,
+            "unit_of_measurement": self._unit_of_measurement,
+            "device_class": self._device_class,
+            "attributes": self.extra_state_attributes,
+        }
+
     @property
     def name(self):
         return f"{self._name_prefix} {self._sensor_hash}"

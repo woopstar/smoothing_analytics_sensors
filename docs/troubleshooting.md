@@ -11,6 +11,13 @@ logger:
 
 Or **Settings → Devices & services → Smoothing Analytics Sensors → Enable debug logging**.
 
+## Download Diagnostics
+
+**Settings → Devices & services → Smoothing Analytics Sensors → ⋮ → Download diagnostics**.
+
+The file holds the entry settings and, per stage, the value, the resolved input, the last `Δt`,
+the median window and the EMA alpha. Attach it to a bug report.
+
 ## Common Problems
 
 | Symptom                                            | Likely cause                                                                                        | Fix                                                                   |

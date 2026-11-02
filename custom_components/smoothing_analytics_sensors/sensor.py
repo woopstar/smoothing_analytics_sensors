@@ -63,5 +63,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         median_unique_id, desired_time_to_95, sensor_hash, config_entry
     )
 
+    # Keep the stages on the entry for diagnostics
+    sensors = [lowpass_sensor, median_sensor, ema_sensor]
+    config_entry.runtime_data = sensors
+
     # Add sensors to Home Assistant
-    async_add_entities([lowpass_sensor, median_sensor, ema_sensor])
+    async_add_entities(sensors)
