@@ -15,11 +15,16 @@ _LOGGER = logging.getLogger(__name__)
 def calculate_alpha(desired_time_to_95, update_interval):
     """Calculate alpha for Exponential Moving Average (EMA) based on smoothing window and update interval."""
 
+    # No time has passed (or the clock went back): keep the previous output
+    if update_interval <= 0:
+        return 0.0
+
     # Calculate the number of updates in the smoothing window
     number_of_updates_needed = desired_time_to_95 / update_interval
 
-    # Calculate alpha based on the number of updates needed
-    return 2 / (number_of_updates_needed + 1)
+    # Calculate alpha based on the number of updates needed. A gap longer than
+    # desired_time_to_95 would give alpha > 1 and overshoot the input.
+    return min(1.0, 2 / (number_of_updates_needed + 1))
 
 
 def ema_filter(value, previous_value, alpha):

@@ -50,6 +50,33 @@ def test_ema_alpha_span_formula() -> None:
     assert calculate_alpha(120, 30) == pytest.approx(0.4)
 
 
+@pytest.mark.parametrize("dt", [1, 60, 120, 1200, 3600, 86400])
+@pytest.mark.parametrize("time_to_95", [10, 120, 600])
+def test_ema_alpha_stays_in_unit_interval(time_to_95: int, dt: int) -> None:
+    """Alpha is in (0, 1] for every positive dt, also after long gaps."""
+    assert 0 < calculate_alpha(time_to_95, dt) <= 1
+
+
+@pytest.mark.parametrize("dt", [0, -5])
+def test_ema_alpha_without_elapsed_time_keeps_previous_output(dt: int) -> None:
+    """dt <= 0 means no time passed, so the output does not move."""
+    alpha = calculate_alpha(120, dt)
+    assert alpha == 0
+    assert ema_filter(200.0, 1000.0, alpha) == pytest.approx(1000.0)
+
+
+@pytest.mark.parametrize(("dt", "expected"), [(120, 1.0), (1200, 1.0)])
+def test_ema_alpha_clamps_at_one_from_time_to_95(dt: int, expected: float) -> None:
+    """From dt = time_to_95 on, alpha is 1: the output jumps to the input."""
+    assert calculate_alpha(120, dt) == pytest.approx(expected)
+
+
+def test_ema_long_gap_lands_between_previous_output_and_input() -> None:
+    """After a 1 h gap the EMA does not overshoot past the input."""
+    output = ema_filter(200.0, 1000.0, calculate_alpha(120, 3600))
+    assert 200.0 <= output <= 1000.0
+
+
 def test_ema_filter_blends_by_alpha() -> None:
     """The EMA output is alpha * x + (1 - alpha) * y."""
     assert ema_filter(10.0, 0.0, 0.25) == pytest.approx(2.5)
