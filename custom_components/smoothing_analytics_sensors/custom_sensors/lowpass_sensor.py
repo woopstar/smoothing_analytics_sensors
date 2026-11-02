@@ -51,7 +51,10 @@ class LowpassSensor(SmoothingAnalyticsSensor):
         self._previous_value = self._state
         if self._previous_value is not None:
             self._state = lowpass_filter(
-                input_value, self._previous_value, self._time_constant
+                input_value,
+                self._previous_value,
+                self._time_constant,
+                self._update_interval,
             )
         else:
             self._state = input_value

@@ -1,11 +1,23 @@
 """Pure filter math for the lowpass, median and EMA stages."""
 
+import math
 import statistics
 
 
-def lowpass_filter(current_value, previous_value, time_constant):
-    """Apply a lowpass filter to smooth out fast fluctuations"""
-    B = 1.0 / time_constant
+def lowpass_coefficient(time_constant, update_interval):
+    """Return the weight of the new value for a time constant in seconds.
+
+    First-order RC filter: after time_constant seconds a step has moved 63 %.
+    No elapsed time (or a clock that went back) keeps the previous output.
+    """
+    if update_interval <= 0:
+        return 0.0
+    return 1.0 - math.exp(-update_interval / time_constant)
+
+
+def lowpass_filter(current_value, previous_value, time_constant, update_interval):
+    """Apply a time-based lowpass filter to smooth out fast fluctuations"""
+    B = lowpass_coefficient(time_constant, update_interval)
     A = 1.0 - B
 
     return A * previous_value + B * current_value

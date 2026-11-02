@@ -1,6 +1,6 @@
 """Integration tests for the lowpass → median → EMA sensor chain."""
 
-from datetime import datetime
+import math
 
 import pytest
 from freezegun.api import FrozenDateTimeFactory
@@ -28,6 +28,8 @@ INPUT_SENSOR = "sensor.grid_power"
 SENSOR_HASH = generate_md5_hash(INPUT_SENSOR)
 STAGES = ("lowpass", "median", "ema")
 POWER = {"unit_of_measurement": "W", "device_class": "power"}
+# With this time constant a 1 s step gives the new value weight 1/2
+HALF_PER_SECOND = 1 / math.log(2)
 
 
 @pytest.fixture
@@ -39,7 +41,7 @@ def config_entry(hass: HomeAssistant) -> MockConfigEntry:
         data={
             "input_sensor": INPUT_SENSOR,
             "device_name": "Grid power",
-            "lowpass_time_constant": 2,
+            "lowpass_time_constant": HALF_PER_SECOND,
             "median_sampling_size": 3,
             "desired_time_to_95": 20,
         },
@@ -159,6 +161,7 @@ async def test_unavailable_input_makes_stack_unavailable(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
     caplog: pytest.LogCaptureFixture,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """An unavailable input makes every stage unavailable, without warnings."""
     ids = await setup_entry(hass, config_entry)
@@ -173,6 +176,7 @@ async def test_unavailable_input_makes_stack_unavailable(
     assert not [r for r in caplog.records if r.levelname == "WARNING"]
 
     # Back online: the lowpass continues from its last value
+    freezer.tick(1)
     await push(hass, "20")
     lowpass = float(hass.states.get(ids["lowpass"]).state)
     assert lowpass == pytest.approx((lowpass_before + 20) / 2)
@@ -230,11 +234,11 @@ async def preregister(hass: HomeAssistant, entry: MockConfigEntry) -> dict[str, 
 
 
 async def test_restore_state(
-    hass: HomeAssistant, config_entry: MockConfigEntry
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
 ) -> None:
     """Values and the median window survive a restart."""
     ids = await preregister(hass, config_entry)
-    last_updated = datetime.now().isoformat()
+    last_updated = dt_util.utcnow().isoformat()
     mock_restore_cache(
         hass,
         [
@@ -257,7 +261,8 @@ async def test_restore_state(
     assert median.attributes["data_points"] == [40.0, 41.0, 42.5]
     assert hass.states.get(ids["ema"]).state == "40.0"
 
-    # The next input continues from the restored lowpass value
+    # The next input, 1 s later, continues from the restored lowpass value
+    freezer.tick(1)
     await push(hass, "50")
     assert float(hass.states.get(ids["lowpass"]).state) == pytest.approx(46.25)
 
@@ -390,12 +395,13 @@ async def test_restore_keeps_update_interval(
 
 
 async def test_small_inputs_converge(
-    hass: HomeAssistant, config_entry: MockConfigEntry
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
 ) -> None:
     """Steps below the display precision are not rounded away."""
     ids = await setup_entry(hass, config_entry)
     await push(hass, "0")
     for i in range(30):
+        freezer.tick(1)
         # Alternate the string so every push is a state change
         await push(hass, "0.004" if i % 2 else "0.0040")
 
@@ -449,11 +455,12 @@ async def test_state_class_before_first_update(
 
 
 async def test_median_window_holds_sampling_size_values(
-    hass: HomeAssistant, config_entry: MockConfigEntry
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
 ) -> None:
     """With a window of 3 the median of [15, 17.5, 18.75] is 17.5."""
     ids = await setup_entry(hass, config_entry)
     for value in ("10", "20", "20.0", "20"):
+        freezer.tick(1)
         await push(hass, value)
     assert float(hass.states.get(ids["median"]).state) == pytest.approx(17.5)
 

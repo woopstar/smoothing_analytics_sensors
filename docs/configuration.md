@@ -8,7 +8,7 @@ SAS is configured in the UI. There is no YAML configuration.
 | ------------------------------ | ----------------------- | ----------------------------- | ---------- | --------- |
 | Input Sensor                   | `input_sensor`          | —                             | any sensor | —         |
 | Name                           | `device_name`           | `Smoothing Analytics Sensors` | text       | —         |
-| Lowpass Time Constant          | `lowpass_time_constant` | 15                            | 1–60       | seconds   |
+| Lowpass Time Constant          | `lowpass_time_constant` | 15                            | 1–3600     | seconds   |
 | Median Sampling Size           | `median_sampling_size`  | 15                            | 1–60       | samples   |
 | EMA Desired Time to Reach 95 % | `desired_time_to_95`    | 120                           | 10–600     | seconds   |
 
@@ -26,7 +26,7 @@ SAS allows one entry per input sensor. Adding the same sensor again stops with "
 | Field                          | Key                     | Range  |
 | ------------------------------ | ----------------------- | ------ |
 | Name                           | `device_name`           | text   |
-| Lowpass Time Constant          | `lowpass_time_constant` | 1–60   |
+| Lowpass Time Constant          | `lowpass_time_constant` | 1–3600 |
 | Median Sampling Size           | `median_sampling_size`  | 1–60   |
 | EMA Desired Time to Reach 95 % | `desired_time_to_95`    | 10–600 |
 
@@ -50,15 +50,15 @@ have its own SAS entry.
 
 ### Lowpass Time Constant
 
-Weight of the newest value is `1 / time_constant`. The parameter counts **updates**, not seconds.
-See [Filter math](filter-math.md#lowpass).
+Time constant in seconds. A step reaches 63 % after this time and 95 % after three times it, for
+any update rate. See [Filter math](filter-math.md#lowpass).
 
-| Value | Effect                                         |
-| ----- | ---------------------------------------------- |
-| 1     | No smoothing. Output equals input.             |
-| 5     | Light smoothing                                |
-| 15    | Default. 95 % of a step after about 45 updates |
-| 60    | Heavy smoothing, slow reaction                 |
+| Value (s) | Effect                                |
+| --------- | ------------------------------------- |
+| 1         | Light smoothing. 95 % after 3 s       |
+| 5         | 95 % after 15 s                       |
+| 15        | Default. 95 % of a step after 45 s    |
+| 60        | Heavy smoothing. 95 % after 3 minutes |
 
 ### Median Sampling Size
 
@@ -75,11 +75,11 @@ updates and reaches 95 % of a step after exactly this time, for any update rate.
 
 ## Presets
 
-| Use case                         | Lowpass | Median | EMA (s) |
-| -------------------------------- | ------- | ------ | ------- |
-| Grid power, 1 s updates          | 15      | 15     | 120     |
-| Grid power, 10 s updates         | 5       | 7      | 300     |
-| House load for battery decisions | 15      | 31     | 300     |
-| Temperature, 60 s updates        | 3       | 5      | 600     |
+| Use case                         | Lowpass (s) | Median | EMA (s) |
+| -------------------------------- | ----------- | ------ | ------- |
+| Grid power, 1 s updates          | 15          | 15     | 120     |
+| Grid power, 10 s updates         | 50          | 7      | 300     |
+| House load for battery decisions | 15          | 31     | 300     |
+| Temperature, 60 s updates        | 180         | 5      | 600     |
 
 Odd median windows give a true middle value.

@@ -252,3 +252,11 @@ async def test_input_without_value_yet_is_accepted(
     assert (await _submit(hass, "sensor.grid_power"))[
         "type"
     ] is FlowResultType.CREATE_ENTRY
+
+
+async def test_lowpass_time_constant_allows_up_to_an_hour(hass: HomeAssistant) -> None:
+    """The lowpass time constant is in seconds, up to 3600."""
+    user = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    assert _ranges(user["data_schema"])["lowpass_time_constant"] == (1, 3600)

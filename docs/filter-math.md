@@ -31,24 +31,26 @@ Change it per entity in the entity settings (**Display precision**).
 ## Lowpass
 
 ```
-B  = 1 / time_constant
+B  = 1 − exp(−Δt / time_constant)
 y' = (1 − B) · y + B · x
 ```
 
+- `time_constant` is in **seconds**. `Δt` is the real time since the lowpass's previous update.
+- First-order RC filter: a step reaches 63 % after `time_constant` seconds and 95 % after
+  `3 × time_constant`, whatever the input's update rate.
 - The first value after a fresh install is passed through: `y' = x`.
-- `time_constant` is a number of **updates**. The real time constant in seconds depends on how
-  often the stage updates. `Δt` is measured and exposed as an attribute but not used in the formula.
+- `Δt ≤ 0` keeps the previous output.
 
-Step response (updates needed to reach 95 % of a step):
+| time_constant (s) | 63 % after | 95 % after |
+| ----------------- | ---------- | ---------- |
+| 1                 | 1 s        | 3 s        |
+| 5                 | 5 s        | 15 s       |
+| 15                | 15 s       | 45 s       |
+| 60                | 60 s       | 180 s      |
 
-| time_constant | Updates to 95 % |
-| ------------- | --------------- |
-| 1             | 1               |
-| 5             | 14              |
-| 15            | 44              |
-| 60            | 179             |
-
-With 1-second input updates and the default 15, the lowpass reaches 95 % after about 44 seconds.
+Releases before this change used `B = 1 / time_constant` per update. With 1-second input updates
+the result is almost the same (95 % after 44 s instead of 45 s for the default 15). With slower
+inputs the old filter was much slower: a 10-second sensor needed 440 s instead of 45 s.
 
 ## Moving Median
 
@@ -106,7 +108,7 @@ The stages are in series, so delays add up. With 1-second input updates and defa
 
 | Stage   | Approx. time to follow a step |
 | ------- | ----------------------------- |
-| Lowpass | 44 s to 95 %                  |
+| Lowpass | 45 s to 95 %                  |
 | Median  | + 8 s (half of 15 updates)    |
 | EMA     | + 120 s to 95 %               |
 
