@@ -8,8 +8,12 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_track_entity_registry_updated_event,
+    async_track_state_change_event,
+)
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, ICON, NAME
@@ -59,6 +63,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         self._unit_of_measurement = None
         self._device_class = None
         self._update_interval = 1
+        self._unsub_input = []
         self._update_settings()
 
     def _update_settings(self):
@@ -199,6 +204,40 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         self._last_updated = now.isoformat()
         self.async_write_ha_state()
 
+    @callback
+    def _async_track_input(self, entity_id):
+        """Listen to state changes and renames of the input."""
+        self._async_untrack_input()
+        _LOGGER.debug("Starting to track state changes for entity_id %s", entity_id)
+        self._unsub_input = [
+            async_track_state_change_event(self.hass, [entity_id], self._handle_update),
+            async_track_entity_registry_updated_event(
+                self.hass, entity_id, self._async_input_registry_updated
+            ),
+        ]
+
+    @callback
+    def _async_untrack_input(self):
+        """Stop listening to the input."""
+        while self._unsub_input:
+            self._unsub_input.pop()()
+
+    @callback
+    def _async_input_registry_updated(self, event):
+        """Follow the input to its new entity_id after a rename."""
+        data = event.data
+        if data["action"] != "update" or "old_entity_id" not in data:
+            return
+        _LOGGER.debug(
+            "Input of %s renamed from %s to %s",
+            self.unique_id,
+            data["old_entity_id"],
+            data["entity_id"],
+        )
+        self._input_entity_id = data["entity_id"]
+        self._async_track_input(self._input_entity_id)
+        self.async_write_ha_state()
+
     async def async_added_to_hass(self):
         """Restore the last state and start listening to the input."""
         old_state = await self.async_get_last_state()
@@ -235,14 +274,8 @@ class SmoothingAnalyticsSensor(RestoreSensor):
             )
             return
 
-        _LOGGER.debug(
-            "Starting to track state changes for entity_id %s", input_entity_id
-        )
-        self.async_on_remove(
-            async_track_state_change_event(
-                self.hass, [input_entity_id], self._handle_update
-            )
-        )
+        self._async_track_input(input_entity_id)
+        self.async_on_remove(self._async_untrack_input)
 
         # Start unavailable if the input already is
         input_state = self.hass.states.get(input_entity_id)

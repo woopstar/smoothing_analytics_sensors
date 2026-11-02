@@ -4,6 +4,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.selector import selector
 
 from .const import (
@@ -20,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for Smoothing Analytics Sensors."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -32,10 +33,16 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not user_input.get("input_sensor"):
                 self._errors["input_sensor"] = "required"
             else:
+                # Remember the registry id so the input can be renamed later
+                data = dict(user_input)
+                entry = er.async_get(self.hass).async_get(data["input_sensor"])
+                if entry is not None:
+                    data["input_entity_uuid"] = entry.id
+
                 # Create the configuration with device_name as title
                 return self.async_create_entry(
                     title=user_input.get("device_name", NAME),
-                    data=user_input,
+                    data=data,
                 )
 
         # Define the form schema

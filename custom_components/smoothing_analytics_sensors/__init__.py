@@ -1,6 +1,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .utils.misc import get_config_value
 
@@ -17,6 +18,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old config entries."""
+    if entry.version > 2:
+        return False
+
+    if entry.version == 1:
+        # Version 2 stores the registry id of the input sensor, so a rename of
+        # the input keeps the entry working
+        data = dict(entry.data)
+        registry_entry = er.async_get(hass).async_get(data["input_sensor"])
+        if registry_entry is not None:
+            data["input_entity_uuid"] = registry_entry.id
+        hass.config_entries.async_update_entry(entry, data=data, version=2)
+
+    return True
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
