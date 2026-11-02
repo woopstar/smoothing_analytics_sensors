@@ -3,6 +3,7 @@
 import logging
 
 from homeassistant.components.sensor import RestoreSensor
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
@@ -113,11 +114,21 @@ class SmoothingAnalyticsSensor(RestoreSensor):
                 entity_id,
             )
         else:
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Entity with unique_id %s not found in registry",
                 self._input_unique_id,
             )
         return self._input_entity_id
+
+    def _set_available(self, available):
+        """Follow the input's availability. Log only on a transition."""
+        if available == self._attr_available:
+            return False
+        self._attr_available = available
+        _LOGGER.debug(
+            "%s is %s", self.unique_id, "available" if available else "unavailable"
+        )
+        return True
 
     async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
@@ -141,10 +152,22 @@ class SmoothingAnalyticsSensor(RestoreSensor):
 
         input_state = self.hass.states.get(input_entity_id)
         if input_state is None:
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Sensor %s not found. Skipping %s update", input_entity_id, self._type
             )
             return
+
+        # Unavailable input makes this stage unavailable, which the next stage
+        # follows. Unknown (for example a median whose window is not full yet)
+        # is skipped and keeps the last value.
+        if input_state.state == STATE_UNAVAILABLE:
+            if self._set_available(False):
+                self.async_write_ha_state()
+            return
+        if input_state.state == STATE_UNKNOWN:
+            _LOGGER.debug("Input %s is unknown. Skipping update", input_entity_id)
+            return
+
         try:
             input_value = float(input_state.state)
         except ValueError:
@@ -158,6 +181,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         self._device_class = input_state.attributes.get("device_class")
         self._state_class = input_state.attributes.get("state_class")
 
+        self._set_available(True)
         self._apply(input_value)
 
         self._last_updated = now.isoformat()
@@ -168,7 +192,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         old_state = await self.async_get_last_state()
 
         if old_state is not None:
-            _LOGGER.info("Restoring state for %s", self.unique_id)
+            _LOGGER.debug("Restoring state for %s", self.unique_id)
             try:
                 self._state = float(old_state.state)
                 self._restore_extra(old_state)
@@ -188,7 +212,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
             # Recalculate derived settings (EMA alpha) from the restored interval
             self._update_settings()
         else:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "No previous state found for %s, starting fresh", self.unique_id
             )
 
@@ -199,7 +223,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
             )
             return
 
-        _LOGGER.info(
+        _LOGGER.debug(
             "Starting to track state changes for entity_id %s", input_entity_id
         )
         self.async_on_remove(
@@ -207,3 +231,8 @@ class SmoothingAnalyticsSensor(RestoreSensor):
                 self.hass, [input_entity_id], self._handle_update
             )
         )
+
+        # Start unavailable if the input already is
+        input_state = self.hass.states.get(input_entity_id)
+        if input_state is not None and input_state.state == STATE_UNAVAILABLE:
+            self._attr_available = False
