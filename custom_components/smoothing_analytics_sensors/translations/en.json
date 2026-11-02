@@ -11,13 +11,21 @@
           "desired_time_to_95": "EMA Desired Time to Reach 95% (seconds)",
           "device_name": "Name"
         }
+      },
+      "reconfigure": {
+        "title": "Change Input Sensor",
+        "description": "Pick a new input sensor. The smoothing sensors keep their entity IDs and history.",
+        "data": {
+          "input_sensor": "Input Sensor"
+        }
       }
     },
     "error": {
       "invalid_sensor": "Choose a sensor that exists and has a numeric value."
     },
     "abort": {
-      "already_configured": "This input sensor already has a Smoothing Analytics entry."
+      "already_configured": "This input sensor already has a Smoothing Analytics entry.",
+      "reconfigure_successful": "The input sensor was changed."
     }
   },
   "options": {

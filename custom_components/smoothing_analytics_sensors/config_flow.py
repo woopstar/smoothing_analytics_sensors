@@ -15,7 +15,7 @@ from .const import (
     DOMAIN,
     NAME,
 )
-from .utils.misc import get_config_value
+from .utils.misc import current_input_sensor, get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,6 +76,51 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Show the form to the user
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
+        )
+
+    async def async_step_reconfigure(self, user_input=None):
+        """Change the input sensor and keep the SAS entities and their history."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            input_sensor = user_input["input_sensor"]
+            if not _is_numeric_sensor(self.hass, input_sensor):
+                errors["input_sensor"] = "invalid_sensor"
+            else:
+                data = {
+                    **entry.data,
+                    "input_sensor": input_sensor,
+                    # Unique IDs stay derived from the first input
+                    "hash_source": entry.data.get("hash_source")
+                    or entry.data["input_sensor"],
+                }
+                data.pop("input_entity_uuid", None)
+                registry_entry = er.async_get(self.hass).async_get(input_sensor)
+                if registry_entry is not None:
+                    data["input_entity_uuid"] = registry_entry.id
+
+                unique_id = data.get("input_entity_uuid") or input_sensor
+                if unique_id != entry.unique_id:
+                    await self.async_set_unique_id(unique_id)
+                    self._abort_if_unique_id_configured()
+                    self._async_abort_entries_match({"input_sensor": input_sensor})
+
+                # The update listener reloads the entry
+                self.hass.config_entries.async_update_entry(
+                    entry, unique_id=unique_id, data=data
+                )
+                return self.async_abort(reason="reconfigure_successful")
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(
+                    "input_sensor", default=current_input_sensor(self.hass, entry)
+                ): selector({"entity": {"domain": "sensor"}}),
+            }
+        )
+        return self.async_show_form(
+            step_id="reconfigure", data_schema=data_schema, errors=errors
         )
 
     @staticmethod
