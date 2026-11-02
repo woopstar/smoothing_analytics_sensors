@@ -1,6 +1,9 @@
 """Tests for renamed input and stage entities, and the v1 → v2 migration."""
 
+import math
+
 import pytest
+from freezegun.api import FrozenDateTimeFactory
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.core import HomeAssistant
@@ -18,7 +21,8 @@ STAGES = ("lowpass", "median", "ema")
 DATA = {
     "input_sensor": INPUT_SENSOR,
     "device_name": "Grid power",
-    "lowpass_time_constant": 2,
+    # A 1 s step gives the new value weight 1/2
+    "lowpass_time_constant": 1 / math.log(2),
     "median_sampling_size": 1,
     "desired_time_to_95": 20,
 }
@@ -96,7 +100,7 @@ async def test_future_version_is_not_loaded(hass: HomeAssistant) -> None:
 
 
 async def test_input_rename_while_running(
-    hass: HomeAssistant, config_entry: MockConfigEntry
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
 ) -> None:
     """The lowpass follows a renamed input without a reload."""
     assert await hass.config_entries.async_setup(config_entry.entry_id)
@@ -105,6 +109,7 @@ async def test_input_rename_while_running(
 
     er.async_get(hass).async_update_entity(INPUT_SENSOR, new_entity_id=RENAMED_INPUT)
     await hass.async_block_till_done()
+    freezer.tick(1)
     await push(hass, RENAMED_INPUT, "20")
 
     lowpass = hass.states.get(stage_ids(hass)["lowpass"])

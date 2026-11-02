@@ -1,6 +1,7 @@
 """Unit tests for the pure filter and helper functions."""
 
 import hashlib
+import math
 from types import SimpleNamespace
 
 import pytest
@@ -8,6 +9,7 @@ import pytest
 from custom_components.smoothing_analytics_sensors.filters import (
     calculate_alpha,
     ema_filter,
+    lowpass_coefficient,
     lowpass_filter,
     median_filter,
 )
@@ -17,30 +19,48 @@ from custom_components.smoothing_analytics_sensors.utils.misc import (
 )
 
 
-def test_lowpass_time_constant_one_passes_input_through() -> None:
-    """A time constant of 1 gives the new value full weight."""
-    assert lowpass_filter(10.0, 0.0, 1) == pytest.approx(10.0)
+def test_lowpass_coefficient_formula() -> None:
+    """The new value gets weight 1 - exp(-dt / time_constant)."""
+    assert lowpass_coefficient(15, 1) == pytest.approx(1 - math.exp(-1 / 15))
+    assert lowpass_filter(15.0, 0.0, 15, 1) == pytest.approx(
+        15 * (1 - math.exp(-1 / 15))
+    )
 
 
-def test_lowpass_weights_new_value_by_inverse_time_constant() -> None:
-    """The newest value gets weight 1 / time_constant."""
-    assert lowpass_filter(15.0, 0.0, 15) == pytest.approx(1.0)
+@pytest.mark.parametrize("dt", [0, -5])
+def test_lowpass_without_elapsed_time_keeps_previous_output(dt: int) -> None:
+    """dt <= 0 means no time passed."""
+    assert lowpass_filter(100.0, 10.0, 15, dt) == pytest.approx(10.0)
 
 
-@pytest.mark.parametrize(("time_constant", "updates"), [(5, 14), (15, 44), (60, 179)])
-def test_lowpass_step_response_matches_docs(time_constant: int, updates: int) -> None:
-    """Updates to reach 95 % of a unit step match docs/filter-math.md."""
-    value = 0.0
-    count = 0
-    while value < 0.95:
-        value = lowpass_filter(1.0, value, time_constant)
-        count += 1
-    assert count == updates
+def test_lowpass_long_gap_lands_on_input() -> None:
+    """After many time constants the output is at the input, never past it."""
+    output = lowpass_filter(200.0, 1000.0, 15, 3600)
+    assert output == pytest.approx(200.0)
+    assert 200.0 <= output <= 1000.0
+
+
+@pytest.mark.parametrize("dt", [0.5, 1, 5, 10])
+@pytest.mark.parametrize("time_constant", [5, 15, 60])
+def test_lowpass_step_response_is_independent_of_update_rate(
+    time_constant: int, dt: float
+) -> None:
+    """A unit step reaches 63 % at time_constant and 95 % at 3 × time_constant."""
+
+    def time_to(level: float) -> float:
+        value, elapsed = 0.0, 0.0
+        while value < level - 1e-9:
+            value = lowpass_filter(1.0, value, time_constant, dt)
+            elapsed += dt
+        return elapsed
+
+    assert abs(time_to(1 - math.exp(-1)) - time_constant) <= dt
+    assert abs(time_to(0.95) - time_constant * math.log(20)) <= dt
 
 
 def test_lowpass_constant_input_stays_constant() -> None:
     """A steady input is a fixed point of the filter."""
-    assert lowpass_filter(-3.5, -3.5, 15) == pytest.approx(-3.5)
+    assert lowpass_filter(-3.5, -3.5, 15, 1) == pytest.approx(-3.5)
 
 
 def test_ema_alpha_formula() -> None:

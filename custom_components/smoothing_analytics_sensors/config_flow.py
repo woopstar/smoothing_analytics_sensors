@@ -197,7 +197,7 @@ def _filter_schema(defaults):
     return {
         vol.Optional(
             "lowpass_time_constant", default=defaults["lowpass_time_constant"]
-        ): _number(1, 60, "seconds"),
+        ): _number(1, 3600, "seconds"),
         vol.Optional(
             "median_sampling_size", default=defaults["median_sampling_size"]
         ): _number(1, 60, "samples"),

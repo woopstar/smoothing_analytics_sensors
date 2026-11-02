@@ -74,7 +74,7 @@ The **EMA sensor** was preferred for this setup because it responds quickly to d
 The lowpass filter is applied to the raw sensor data and is used to remove short-term spikes and fluctuations. The time constant controls how quickly it reacts to changes.
 
 - **Purpose**: Smooths out rapid spikes from the raw data.
-- **Time Constant**: 15 by default. The newest value gets weight 1/15 per update. A higher value smooths more but reacts slower.
+- **Time Constant**: 15 seconds by default. A step reaches 63 % after the time constant and 95 % after three times it, for any update rate. A higher value smooths more but reacts slower.
 - **Rationale**: A 15-second time constant is ideal for handling short spikes from appliances while responding to longer-term changes.
 
 ---
