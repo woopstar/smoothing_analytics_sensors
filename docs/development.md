@@ -31,10 +31,16 @@ export SAS_VENV=~/.cache/sas/venv
 | `./scripts/quality.sh typing`       | mypy                                            |
 | `./scripts/quality.sh translations` | en.json vs da.json                              |
 | `./scripts/quality.sh validate`     | YAML and JSON syntax                            |
-| `./scripts/quality.sh test`         | pytest with coverage                            |
+| `./scripts/quality.sh test`         | pytest, fails below 90 % coverage               |
 | `./scripts/quality.sh all`          | Everything above                                |
 
 Optional: `pre-commit install` runs `lint` and `translations` on every commit.
+
+### Known Bugs in Tests
+
+A test for a known bug is marked `@pytest.mark.xfail(strict=True, reason="#<issue>: ...")`.
+Once the bug is fixed the test passes, `strict` turns that into a failure, and the fix PR removes
+the marker.
 
 ## Workflow
 
