@@ -20,7 +20,6 @@ Or **Settings → Devices & services → Smoothing Analytics Sensors → Enable 
 | Log: `Invalid value from sensor.x: unavailable`    | Input sensor is `unavailable` or `unknown`                                                          | Harmless. The filter skips the update.                                |
 | Options form shows defaults, not my initial values | Options form reads only saved options                                                               | Known issue. Re-enter your values once.                               |
 | Two entries for the same input sensor break        | Both entries get the same unique_ids                                                                | Use one entry per input sensor                                        |
-| Energy dashboard does not offer the sensor         | Long-term statistics need `state_class`                                                             | Known issue, see open issues                                          |
 
 ## Known Issues
 

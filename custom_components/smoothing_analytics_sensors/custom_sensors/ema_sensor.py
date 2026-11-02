@@ -3,7 +3,6 @@ from datetime import datetime
 
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_EMA_DESIRED_TIME_TO_95, DOMAIN, ICON
 from ..entity import SmoothingAnalyticsEntity
@@ -32,7 +31,7 @@ def ema_filter(value, previous_value, alpha):
     return alpha * value + (1 - alpha) * previous_value
 
 
-class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
+class EmaSensor(SmoothingAnalyticsEntity):
     """Exponential Moving Average (EMA) filtered sensor with persistent state and device support, based on unique_id."""
 
     # Define the attributes of the entity
@@ -51,7 +50,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = None
         self._device_class = None
         self._state_class = None
-        self._last_reset = None
         self._config_entry = config_entry
         self._unique_id = f"sas_ema_{sensor_hash}"
         self._update_interval = 1
@@ -83,11 +81,11 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
         return self._unique_id
 
     @property
-    def state(self):
+    def native_value(self):
         return self._state
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         return self._unit_of_measurement
 
     @property
@@ -97,10 +95,6 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
     @property
     def state_class(self):
         return self._state_class
-
-    @property
-    def last_reset(self):
-        return self._last_reset
 
     @property
     def extra_state_attributes(self):

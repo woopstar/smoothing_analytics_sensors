@@ -1,6 +1,6 @@
 import logging
 
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import RestoreSensor
 
 from .const import DOMAIN, ICON, NAME
 from .utils.misc import get_config_value
@@ -8,7 +8,7 @@ from .utils.misc import get_config_value
 _LOGGER = logging.getLogger(__name__)
 
 
-class SmoothingAnalyticsEntity(Entity):
+class SmoothingAnalyticsEntity(RestoreSensor):
     """Base class for Smoothing Analytics Entity (Device)"""
 
     # Define the attributes of the entity

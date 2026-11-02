@@ -9,6 +9,10 @@ from pytest_homeassistant_custom_component.common import (
     mock_restore_cache,
 )
 
+from homeassistant.components.sensor import (
+    DATA_COMPONENT as SENSOR_COMPONENT,
+    SensorEntity,
+)
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
@@ -230,6 +234,27 @@ async def test_options_flow_shows_form(
     assert result["step_id"] == "init"
 
 
+async def test_sensors_publish_state_class(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """All stages are SensorEntity and publish state_class for long-term statistics."""
+    ids = await setup_entry(hass, config_entry)
+    for value in ("10", "20", "20.0"):
+        hass.states.async_set(
+            INPUT_SENSOR, value, {**POWER, "state_class": "measurement"}
+        )
+        await hass.async_block_till_done()
+
+    component = hass.data[SENSOR_COMPONENT]
+    for stage in STAGES:
+        entity = component.get_entity(ids[stage])
+        assert isinstance(entity, SensorEntity)
+        state = hass.states.get(ids[stage])
+        assert state.attributes["state_class"] == "measurement"
+        assert state.attributes["unit_of_measurement"] == "W"
+        assert state.attributes["device_class"] == "power"
+
+
 # Known bugs. strict=True turns them into failures once the issue is fixed,
 # so the fix PR has to remove the marker.
 
@@ -270,14 +295,3 @@ async def test_unavailable_input_logs_no_warning(
     caplog.clear()
     await push(hass, "unavailable")
     assert not [r for r in caplog.records if r.levelname == "WARNING"]
-
-
-@pytest.mark.xfail(strict=True, reason="#69: bare Entity hides state_class")
-async def test_state_class_is_exposed(
-    hass: HomeAssistant, config_entry: MockConfigEntry
-) -> None:
-    """Sensors expose a state_class so long-term statistics work."""
-    ids = await setup_entry(hass, config_entry)
-    hass.states.async_set(INPUT_SENSOR, "10", {**POWER, "state_class": "measurement"})
-    await hass.async_block_till_done()
-    assert hass.states.get(ids["lowpass"]).attributes["state_class"] == "measurement"

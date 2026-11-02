@@ -3,7 +3,6 @@ from datetime import datetime
 
 # Importer den nye funktion
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_LOW_PASS, ICON
 from ..entity import SmoothingAnalyticsEntity
@@ -20,7 +19,7 @@ def lowpass_filter(current_value, previous_value, time_constant):
     return A * previous_value + B * current_value
 
 
-class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
+class LowpassSensor(SmoothingAnalyticsEntity):
     """Lowpass filtered sensor with persistent state, precision of 2 decimal places, and device support."""
 
     # Define the attributes of the entity
@@ -38,7 +37,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         self._unit_of_measurement = None
         self._device_class = None
         self._state_class = None
-        self._last_reset = None
         self._config_entry = config_entry
         self._unique_id = f"sas_lowpass_{sensor_hash}"
         self._update_interval = 1
@@ -62,11 +60,11 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
         return self._unique_id
 
     @property
-    def state(self):
+    def native_value(self):
         return self._state
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         return self._unit_of_measurement
 
     @property
@@ -76,10 +74,6 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
     @property
     def state_class(self):
         return self._state_class
-
-    @property
-    def last_reset(self):
-        return self._last_reset
 
     @property
     def extra_state_attributes(self):

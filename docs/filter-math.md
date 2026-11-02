@@ -102,5 +102,5 @@ The stages are in series, so delays add up. With 1-second input updates and defa
 
 ## Restore After Restart
 
-All three stages restore their last state with `RestoreEntity`. The median also restores its
+All three stages restore their last state with `RestoreSensor`. The median also restores its
 window. The restored `last_updated` makes the first `Δt` after restart as long as the downtime.
