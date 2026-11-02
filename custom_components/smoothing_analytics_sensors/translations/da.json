@@ -14,7 +14,7 @@
       }
     },
     "error": {
-      "invalid_sensor": "Ugyldig input sensor. Vælg venligst en gyldig sensor."
+      "invalid_sensor": "Vælg en sensor, der findes og har en numerisk værdi."
     },
     "abort": {
       "already_configured": "Denne input-sensor har allerede en Smoothing Analytics-enhed."

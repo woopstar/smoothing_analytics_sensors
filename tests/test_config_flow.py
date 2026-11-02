@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant import config_entries
@@ -10,6 +11,13 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.smoothing_analytics_sensors.const import DOMAIN
+
+
+@pytest.fixture(autouse=True)
+def input_states(hass: HomeAssistant) -> None:
+    """Give the input sensors used below a numeric state."""
+    for entity_id in ("sensor.grid_power", "sensor.house_power", "sensor.house_load"):
+        hass.states.async_set(entity_id, "10")
 
 
 async def test_user_step_creates_entry(hass: HomeAssistant) -> None:
@@ -43,8 +51,9 @@ async def test_user_step_creates_entry(hass: HomeAssistant) -> None:
 async def test_user_step_stores_input_registry_id(hass: HomeAssistant) -> None:
     """A registered input sensor is stored with its registry id."""
     registry_entry = er.async_get(hass).async_get_or_create(
-        "sensor", "test", "grid", suggested_object_id="grid_power"
+        "sensor", "test", "grid", suggested_object_id="grid_meter"
     )
+    hass.states.async_set(registry_entry.entity_id, "10")
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -91,16 +100,18 @@ async def test_renamed_input_is_still_a_duplicate(hass: HomeAssistant) -> None:
     """The registry id recognizes an input that was renamed after setup."""
     registry = er.async_get(hass)
     registry.async_get_or_create(
-        "sensor", "test", "grid", suggested_object_id="grid_power"
+        "sensor", "test", "grid", suggested_object_id="grid_meter"
     )
-    assert (await _submit(hass, "sensor.grid_power"))[
+    hass.states.async_set("sensor.grid_meter", "10")
+    assert (await _submit(hass, "sensor.grid_meter"))[
         "type"
     ] is FlowResultType.CREATE_ENTRY
     registry.async_update_entity(
-        "sensor.grid_power", new_entity_id="sensor.house_power"
+        "sensor.grid_meter", new_entity_id="sensor.house_meter"
     )
+    hass.states.async_set("sensor.house_meter", "10")
 
-    result = await _submit(hass, "sensor.house_power")
+    result = await _submit(hass, "sensor.house_meter")
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
 
@@ -215,3 +226,29 @@ async def test_user_step_stores_median_window_as_int(hass: HomeAssistant) -> Non
         )
     assert result["data"]["median_sampling_size"] == 15
     assert isinstance(result["data"]["median_sampling_size"], int)
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "state"),
+    [("sensor.grid_power", "on"), ("sensor.missing", None)],
+)
+async def test_non_numeric_input_shows_invalid_sensor(
+    hass: HomeAssistant, entity_id: str, state: str | None
+) -> None:
+    """A sensor without a numeric value, or a missing one, is refused."""
+    if state is not None:
+        hass.states.async_set(entity_id, state)
+    result = await _submit(hass, entity_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"input_sensor": "invalid_sensor"}
+
+
+@pytest.mark.parametrize("state", ["unavailable", "unknown", "-3.5"])
+async def test_input_without_value_yet_is_accepted(
+    hass: HomeAssistant, state: str
+) -> None:
+    """Numbers and sensors that have no value yet are accepted."""
+    hass.states.async_set("sensor.grid_power", state)
+    assert (await _submit(hass, "sensor.grid_power"))[
+        "type"
+    ] is FlowResultType.CREATE_ENTRY
