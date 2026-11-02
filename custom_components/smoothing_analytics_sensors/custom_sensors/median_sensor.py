@@ -25,7 +25,6 @@ class MedianSensor(SmoothingAnalyticsSensor):
             "sensor_update_interval",
         }
     )
-    _name_prefix = "Median Filtered Sensor"
 
     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
         self._sampling_size = sampling_size

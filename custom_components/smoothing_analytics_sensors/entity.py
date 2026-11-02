@@ -25,7 +25,8 @@ _LOGGER = logging.getLogger(__name__)
 class SmoothingAnalyticsSensor(RestoreSensor):
     """Base class for one stage of the smoothing stack.
 
-    Subclasses set `_type` and `_name_prefix` and implement `_apply`. The input
+    Subclasses set `_type` and implement `_apply`. The entity name comes from
+    the translation key `_type`. The input
     is either a fixed entity_id (lowpass) or the unique_id of the upstream SAS
     stage, resolved through the entity registry (median, EMA).
     """
@@ -41,7 +42,6 @@ class SmoothingAnalyticsSensor(RestoreSensor):
     _attr_suggested_display_precision = 2
 
     _type: str
-    _name_prefix: str
 
     def __init__(
         self,
@@ -58,6 +58,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         self._input_entity_id = input_entity_id
         self._input_unique_id = input_unique_id
         self._attr_unique_id = f"sas_{self._type}_{sensor_hash}"
+        self._attr_translation_key = self._type
         self._state = None
         self._last_updated = None
         self._unit_of_measurement = None
@@ -94,10 +95,6 @@ class SmoothingAnalyticsSensor(RestoreSensor):
             "device_class": self._device_class,
             "attributes": self.extra_state_attributes,
         }
-
-    @property
-    def name(self):
-        return f"{self._name_prefix} {self._sensor_hash}"
 
     @property
     def native_value(self):

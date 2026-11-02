@@ -24,7 +24,6 @@ class EmaSensor(SmoothingAnalyticsSensor):
             "sensor_update_interval",
         }
     )
-    _name_prefix = "EMA Filtered Sensor"
 
     def __init__(self, input_unique_id, desired_time_to_95, sensor_hash, config_entry):
         self._desired_time_to_95 = desired_time_to_95
