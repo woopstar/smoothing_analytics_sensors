@@ -70,8 +70,8 @@ The median sensor stays `unknown` until the window is full after a fresh install
 ### EMA Desired Time to Reach 95 %
 
 Target time in seconds for the EMA to follow a step change. The EMA uses the real time between its
-updates. See [Filter math](filter-math.md#ema) for how close the current formula gets to the
-target.
+updates and reaches 95 % of a step after exactly this time, for any update rate. See
+[Filter math](filter-math.md#ema).
 
 ## Presets
 

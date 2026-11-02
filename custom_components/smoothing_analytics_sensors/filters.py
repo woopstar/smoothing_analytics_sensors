@@ -34,12 +34,10 @@ def calculate_alpha(desired_time_to_95, update_interval):
     if update_interval <= 0:
         return 0.0
 
-    # Calculate the number of updates in the smoothing window
-    number_of_updates_needed = desired_time_to_95 / update_interval
-
-    # Calculate alpha based on the number of updates needed. A gap longer than
-    # desired_time_to_95 would give alpha > 1 and overshoot the input.
-    return min(1.0, 2 / (number_of_updates_needed + 1))
+    # Exact time-based coefficient: after desired_time_to_95 seconds the
+    # remaining distance is 5 %, whatever the update rate. Always below 1, so
+    # long gaps cannot overshoot.
+    return 1.0 - 0.05 ** (update_interval / desired_time_to_95)
 
 
 def ema_filter(value, previous_value, alpha):

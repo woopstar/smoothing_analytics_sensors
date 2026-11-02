@@ -67,40 +67,38 @@ y'     = median(window)        once len(window) ≥ N
 ## EMA
 
 ```
-N  = desired_time_to_95 / Δt
-α  = min(1, 2 / (N + 1))
+α  = 1 − 0.05^(Δt / desired_time_to_95)
 y' = α · x + (1 − α) · y
 ```
 
 - `Δt` is the real time since the EMA's previous update, so the filter adapts to irregular input.
 - The first value after a fresh install is passed through: `y' = x`.
 
-### How Close Is "Time to 95 %"?
+### Time to 95 %
 
-`α = 2 / (N + 1)` is the classic "span" EMA. It does not reach 95 % at `desired_time_to_95`.
-Measured on a unit step with `desired_time_to_95 = 120`:
+After `desired_time_to_95` seconds the EMA has covered 95 % of a step, whatever the update rate.
+With `desired_time_to_95 = 120`:
 
-| Δt (s) | α      | Reached at 120 s | Time to reach 95 % |
-| ------ | ------ | ---------------- | ------------------ |
-| 1      | 0.0165 | 86.5 %           | 180 s              |
-| 10     | 0.1538 | 86.5 %           | 180 s              |
-| 30     | 0.4000 | 87.0 %           | 180 s              |
+| Δt (s) | α      | Reached at 120 s |
+| ------ | ------ | ---------------- |
+| 1      | 0.0247 | 95 %             |
+| 10     | 0.2209 | 95 %             |
+| 30     | 0.5271 | 95 %             |
 
-The EMA reaches 95 % after about 1.5 × `desired_time_to_95`.
-
-For an exact 95 % at `T95` the coefficient would be `α = 1 − 0.05^(Δt / T95)`.
+Releases before this change used `α = 2 / (desired_time_to_95 / Δt + 1)`, which reached only
+86.5 % at `desired_time_to_95` and 95 % after about 1.5 × `desired_time_to_95`. The same setting
+now reacts about a third faster.
 
 ### Large Gaps
 
-Without a limit, `Δt > desired_time_to_95` would give `α > 1` and the output would overshoot the
-input. This happens after a restart (the restored `last_updated` is old) or after the input was
-`unavailable` for a while. α is therefore clamped:
+`α` is always below 1, so a long gap (restart, `unavailable` input) moves the output toward the
+input but never past it:
 
-| Δt                     | α           | Output                            |
-| ---------------------- | ----------- | --------------------------------- |
-| `≤ 0` (same instant)   | 0           | Unchanged                         |
-| `0 < Δt < T95`         | `2 / (N+1)` | Between previous output and input |
-| `≥ desired_time_to_95` | 1           | Jumps to the input                |
+| Δt                        | α    | Output                       |
+| ------------------------- | ---- | ---------------------------- |
+| `≤ 0` (same instant)      | 0    | Unchanged                    |
+| `desired_time_to_95`      | 0.95 | 95 % of the way to the input |
+| `10 × desired_time_to_95` | ≈ 1  | At the input                 |
 
 ## Stacking Delay
 
@@ -110,7 +108,7 @@ The stages are in series, so delays add up. With 1-second input updates and defa
 | ------- | ----------------------------- |
 | Lowpass | 44 s to 95 %                  |
 | Median  | + 8 s (half of 15 updates)    |
-| EMA     | + 180 s to 95 %               |
+| EMA     | + 120 s to 95 %               |
 
 ## Restore After Restart
 
