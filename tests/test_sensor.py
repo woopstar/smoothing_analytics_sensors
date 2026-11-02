@@ -447,11 +447,6 @@ async def test_state_class_before_first_update(
     assert hass.states.get(ids["lowpass"]).attributes["state_class"] == "measurement"
 
 
-# Known bugs. strict=True turns them into failures once the issue is fixed,
-# so the fix PR has to remove the marker.
-
-
-@pytest.mark.xfail(strict=True, reason="#90: median uses N + 1 values")
 async def test_median_window_holds_sampling_size_values(
     hass: HomeAssistant, config_entry: MockConfigEntry
 ) -> None:

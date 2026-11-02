@@ -61,6 +61,7 @@ y'     = median(window)        once len(window) ≥ N
 - Until the window holds `N` values the output keeps its previous value (`unknown` after a fresh
   install).
 - The window is stored in the `data_points` attribute and restored after restart.
+- After lowering `median_sampling_size`, the restored window is cut to the newest `N` values.
 - A spike lasting fewer than `N / 2` updates is removed completely.
 
 ## EMA

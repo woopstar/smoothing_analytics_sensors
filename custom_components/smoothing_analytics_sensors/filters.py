@@ -16,15 +16,13 @@ def median_filter(data_points, value, sampling_size):
 
     The median is None until the window holds sampling_size values.
     """
-    new_data_points = [*data_points, value]
+    # Keep only the last `sampling_size` values, also when a restored window
+    # is longer than a smaller window set in the options
+    new_data_points = [*data_points, value][-int(sampling_size) :]
 
     median = None
     if len(new_data_points) >= sampling_size:
         median = statistics.median(new_data_points)
-
-    # Keep only the last `sampling_size` data points
-    while len(new_data_points) > sampling_size:
-        new_data_points.pop(0)
 
     return median, new_data_points
 
