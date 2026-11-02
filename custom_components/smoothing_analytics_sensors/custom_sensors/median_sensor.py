@@ -8,7 +8,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import DEFAULT_MEDIAN_SIZE, DOMAIN, ICON
 from ..entity import SmoothingAnalyticsEntity
-from ..utils.misc import async_resolve_entity_id_from_unique_id, get_config_value
+from ..utils.misc import get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -241,5 +241,5 @@ class MedianSensor(SmoothingAnalyticsEntity, RestoreEntity):
             )
         else:
             _LOGGER.error(
-                f"Failed to track state changes, input_entity_id is not resolved."
+                "Failed to track state changes, input_entity_id is not resolved."
             )
