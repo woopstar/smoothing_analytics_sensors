@@ -477,3 +477,43 @@ async def test_float_window_from_older_entries_is_an_int(hass: HomeAssistant) ->
     size = hass.states.get(ids["median"]).attributes["median_sampling_size"]
     assert size == 3
     assert isinstance(size, int)
+
+
+@pytest.mark.parametrize(
+    ("language", "names"),
+    [
+        ("en", {"lowpass": "Lowpass", "median": "Median", "ema": "EMA"}),
+        ("da", {"lowpass": "Lavpas", "median": "Median", "ema": "EMA"}),
+    ],
+)
+async def test_entity_names_are_translated(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    language: str,
+    names: dict[str, str],
+) -> None:
+    """New entries get short translated names without a hash."""
+    hass.config.language = language
+    ids = await setup_entry(hass, config_entry)
+    for stage, name in names.items():
+        assert hass.states.get(ids[stage]).attributes["friendly_name"] == (
+            f"Grid power {name}"
+        )
+    assert ids["ema"] == "sensor.grid_power_ema"
+
+
+async def test_existing_entity_ids_are_kept(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Entity IDs from older releases stay, only the display name changes."""
+    registry = er.async_get(hass)
+    old_id = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"sas_ema_{SENSOR_HASH}",
+        suggested_object_id=f"grid_power_ema_filtered_sensor_{SENSOR_HASH}",
+        config_entry=config_entry,
+    ).entity_id
+    ids = await setup_entry(hass, config_entry)
+    assert ids["ema"] == old_id
+    assert hass.states.get(old_id).attributes["friendly_name"] == "Grid power EMA"

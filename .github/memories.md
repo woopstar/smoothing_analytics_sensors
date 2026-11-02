@@ -52,7 +52,7 @@ Values are read with `get_config_value()`: options first, then data, then defaul
 
 ## Canonical Patterns
 
-- New stage logic goes in `SmoothingAnalyticsSensor` subclasses: set `_type` and `_name_prefix`,
+- New stage logic goes in `SmoothingAnalyticsSensor` subclasses: set `_type` (also the translation key for the name),
   implement `_apply(value)`, and `_restore_extra` / `_reset_extra` for extra restored values.
 - Filter math lives only in `filters.py` and is tested in `tests/test_filters.py`.
 - Config lookup: `utils.misc.get_config_value(entry, key, default)`. Never read
@@ -68,8 +68,8 @@ Values are read with `get_config_value()`: options first, then data, then defaul
   New shell scripts then need `git update-index --chmod=+x <file>`, or CI fails with exit 126.
 - Keep the venv outside synced folders: `SAS_VENV=~/.cache/sas/venv`.
 - The GitHub wiki must have one page created in the UI before `sync-wiki.yml` can push.
-- Translation keys drive only flow strings today. Entity names are hard-coded in each
-  sensor's `name` property.
+- Entity names come from `entity.sensor.<type>.name` in the translations (`_attr_translation_key`).
+  Add a key to `en.json` and `da.json` for every new stage.
 
 ## Open Review Findings
 

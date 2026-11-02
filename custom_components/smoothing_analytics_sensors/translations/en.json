@@ -41,5 +41,18 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "lowpass": {
+        "name": "Lowpass"
+      },
+      "median": {
+        "name": "Median"
+      },
+      "ema": {
+        "name": "EMA"
+      }
+    }
   }
 }

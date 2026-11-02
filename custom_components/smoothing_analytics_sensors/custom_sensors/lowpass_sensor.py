@@ -18,7 +18,6 @@ class LowpassSensor(SmoothingAnalyticsSensor):
     _unrecorded_attributes = frozenset(
         {"last_updated", "previous_value", "sensor_update_interval"}
     )
-    _name_prefix = "Lowpass Filtered Sensor"
 
     def __init__(self, input_sensor, time_constant, sensor_hash, config_entry):
         self._time_constant = time_constant
