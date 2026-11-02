@@ -35,3 +35,32 @@ async def test_setup_and_unload_entry(hass: HomeAssistant) -> None:
     assert entry.state is ConfigEntryState.NOT_LOADED
     assert DOMAIN not in hass.data
     assert not hasattr(sensor, "async_unload_entry")
+
+
+async def test_setup_gives_old_entry_a_unique_id(hass: HomeAssistant) -> None:
+    """An entry from before the duplicate check gets its unique_id at setup."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=2, data={"input_sensor": "sensor.grid_power"}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.unique_id == "sensor.grid_power"
+
+
+async def test_setup_skips_unique_id_already_in_use(hass: HomeAssistant) -> None:
+    """Of two old duplicate entries only the first gets the unique_id."""
+    first = MockConfigEntry(
+        domain=DOMAIN,
+        version=2,
+        unique_id="sensor.grid_power",
+        data={"input_sensor": "sensor.grid_power"},
+    )
+    second = MockConfigEntry(
+        domain=DOMAIN, version=2, data={"input_sensor": "sensor.grid_power"}
+    )
+    first.add_to_hass(hass)
+    second.add_to_hass(hass)
+    await hass.config_entries.async_setup(second.entry_id)
+    await hass.async_block_till_done()
+    assert second.unique_id is None

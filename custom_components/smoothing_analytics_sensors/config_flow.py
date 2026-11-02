@@ -39,6 +39,16 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if entry is not None:
                     data["input_entity_uuid"] = entry.id
 
+                # One entry per input sensor. The unique_id is the registry id
+                # when there is one, so a renamed input is still recognized.
+                # Entries created before this check have no unique_id and are
+                # matched on their data.
+                await self.async_set_unique_id(
+                    data.get("input_entity_uuid") or data["input_sensor"]
+                )
+                self._abort_if_unique_id_configured()
+                self._async_abort_entries_match({"input_sensor": data["input_sensor"]})
+
                 # Create the configuration with device_name as title
                 return self.async_create_entry(
                     title=user_input.get("device_name", NAME),
