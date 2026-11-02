@@ -150,8 +150,56 @@ async def test_invalid_input_is_skipped(
     """A non-numeric input leaves the lowpass value unchanged."""
     ids = await setup_entry(hass, config_entry)
     await push(hass, "10")
-    await push(hass, "unavailable")
+    await push(hass, "not a number")
     assert hass.states.get(ids["lowpass"]).state == "10.0"
+
+
+async def test_unavailable_input_makes_stack_unavailable(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """An unavailable input makes every stage unavailable, without warnings."""
+    ids = await setup_entry(hass, config_entry)
+    for value in ("10", "20", "20.0"):
+        await push(hass, value)
+    lowpass_before = float(hass.states.get(ids["lowpass"]).state)
+
+    caplog.clear()
+    await push(hass, "unavailable")
+    for stage in STAGES:
+        assert hass.states.get(ids[stage]).state == "unavailable"
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
+    # Back online: the lowpass continues from its last value
+    await push(hass, "20")
+    lowpass = float(hass.states.get(ids["lowpass"]).state)
+    assert lowpass == pytest.approx((lowpass_before + 20) / 2)
+    for stage in STAGES:
+        assert hass.states.get(ids[stage]).state != "unavailable"
+
+
+async def test_unknown_input_is_skipped_quietly(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """An unknown input keeps the last value and logs no warning."""
+    ids = await setup_entry(hass, config_entry)
+    await push(hass, "10")
+    caplog.clear()
+    await push(hass, "unknown")
+    assert hass.states.get(ids["lowpass"]).state == "10.0"
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
+
+async def test_starts_unavailable_with_unavailable_input(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """The lowpass is unavailable from the start if the input is."""
+    hass.states.async_set(INPUT_SENSOR, "unavailable")
+    ids = await setup_entry(hass, config_entry)
+    assert hass.states.get(ids["lowpass"]).state == "unavailable"
 
 
 async def test_input_removed_is_skipped(
@@ -380,17 +428,3 @@ async def test_median_window_holds_sampling_size_values(
     for value in ("10", "20", "20.0", "20"):
         await push(hass, value)
     assert float(hass.states.get(ids["median"]).state) == pytest.approx(17.5)
-
-
-@pytest.mark.xfail(strict=True, reason="#71: unavailable input logs a warning")
-async def test_unavailable_input_logs_no_warning(
-    hass: HomeAssistant,
-    config_entry: MockConfigEntry,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """An unavailable input is normal and not worth a warning."""
-    await setup_entry(hass, config_entry)
-    await push(hass, "10")
-    caplog.clear()
-    await push(hass, "unavailable")
-    assert not [r for r in caplog.records if r.levelname == "WARNING"]

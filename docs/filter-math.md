@@ -11,6 +11,16 @@ seconds since the sensor's own previous update.
 Each stage updates only when its upstream entity changes state (`async_track_state_change_event`).
 Home Assistant does not poll the sensors (`should_poll = False`).
 
+| Upstream state | Stage                                                  |
+| -------------- | ------------------------------------------------------ |
+| number         | Filters the value, is available                        |
+| `unavailable`  | Becomes `unavailable`. Keeps its last value internally |
+| `unknown`      | Skips the update and keeps its last value              |
+| other text     | Skips the update and logs a warning                    |
+
+Unavailability propagates down the stack: lowpass → median → EMA. When the input returns, each
+stage continues from its last value.
+
 There is no periodic tick. While the input stays constant, the outputs stay where they are, and
 the median window only holds real upstream readings. `Δt` is always the time between two real
 updates, measured in UTC, so DST changes and time zone changes do not affect it.
