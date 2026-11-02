@@ -24,6 +24,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for Smoothing Analytics Sensors."""
 
     VERSION = 2
+    MINOR_VERSION = 2
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""

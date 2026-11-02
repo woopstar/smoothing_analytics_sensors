@@ -1,3 +1,5 @@
+import math
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -7,6 +9,10 @@ from .const import DOMAIN
 from .utils.misc import get_config_value
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+# Releases before 2.0.0 stored the EMA setting as a window of N samples
+LEGACY_EMA_KEY = "ema_smoothing_window"
+EMA_KEY = "desired_time_to_95"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -49,7 +55,39 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             data["input_entity_uuid"] = registry_entry.id
         hass.config_entries.async_update_entry(entry, data=data, version=2)
 
+    if entry.version == 2 and entry.minor_version < 2:
+        # Minor version 2 converts the pre-2.0.0 EMA window, which every
+        # release since 2.0.0 has ignored in favour of the default
+        interval = float(entry.data.get("update_interval") or 1)
+        hass.config_entries.async_update_entry(
+            entry,
+            data=_convert_legacy_ema(entry.data, interval),
+            options=_convert_legacy_ema(entry.options, interval),
+            minor_version=2,
+        )
+
     return True
+
+
+def _convert_legacy_ema(settings, update_interval: float) -> dict:
+    """Replace a legacy EMA window with the matching time to reach 95 %."""
+    settings = dict(settings)
+    window = settings.pop(LEGACY_EMA_KEY, None)
+    if window is not None and EMA_KEY not in settings:
+        settings[EMA_KEY] = legacy_window_to_time_to_95(window, update_interval)
+    return settings
+
+
+def legacy_window_to_time_to_95(window: float, update_interval: float) -> int:
+    """Seconds an EMA with alpha = 2 / (N + 1) needs to reach 95 %.
+
+    Clamped to the 10-600 s range of the config flow.
+    """
+    alpha = 2 / (float(window) + 1)
+    if alpha >= 1:
+        return 10
+    samples = math.log(0.05) / math.log(1 - alpha)
+    return max(10, min(600, round(samples * update_interval)))
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
