@@ -2,7 +2,7 @@
 
 How the three stages behave on grid power with 1-second updates and the default settings.
 
-![Input, lowpass, median and EMA with default settings](https://raw.githubusercontent.com/woopstar/smoothing_analytics_sensors/main/assets/visualization.png)
+![Input, lowpass, median and EMA with default settings](https://raw.githubusercontent.com/woopstar/smoothing_analytics_sensors/main/docs/images/visualization.png)
 
 | Line            | Setting                  | What it shows                                                 |
 | --------------- | ------------------------ | ------------------------------------------------------------- |
@@ -31,5 +31,5 @@ same math as the sensors:
 uv run --no-project --with matplotlib python scripts/plot_filters.py
 ```
 
-It writes `assets/visualization.png`. Run it in the same PR as any change to `filters.py` or to
+It writes `docs/images/visualization.png`. Run it in the same PR as any change to `filters.py` or to
 the defaults in `const.py`.

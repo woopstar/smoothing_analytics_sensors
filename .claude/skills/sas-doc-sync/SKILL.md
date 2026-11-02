@@ -13,7 +13,7 @@ merge to `main`. Stale docs reach users within minutes.
 | File                        | Check when                                                     |
 | --------------------------- | -------------------------------------------------------------- |
 | `docs/filter-math.md`       | Any formula, coefficient, restore or stacking change           |
-| `assets/visualization.png`  | Filter math or defaults changed: run `scripts/plot_filters.py` |
+| `docs/images/visualization.png`  | Filter math or defaults changed: run `scripts/plot_filters.py` |
 | `docs/configuration.md`     | Config/options flow fields, defaults, ranges                   |
 | `docs/sensors-reference.md` | Entity names, unique IDs, attributes, units, state class       |
 | `docs/troubleshooting.md`   | New log messages, failure modes, known issues                  |

@@ -95,6 +95,15 @@ use labels defined there.
 | `sas-pr-workflow`      | PR format, scope and merge rules               |
 | `code-review`          | Review checklist                               |
 
+## Images
+
+| File | Made by |
+| --- | --- |
+| `custom_components/smoothing_analytics_sensors/brand/icon.png`, `icon@2x.png` | `scripts/plot_brand_icon.py` |
+| `docs/images/visualization.png` | `scripts/plot_filters.py` |
+
+Run either with `uv run --no-project --with matplotlib python scripts/<script>.py`.
+
 ## Release
 
 1. Merge PRs with correct labels (`bug`, `enhancement`, `breaking-change`, `major`/`minor`/`patch`).

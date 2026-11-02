@@ -1,4 +1,4 @@
-"""Draw assets/visualization.png from the integration's own filter math.
+"""Draw docs/images/visualization.png from the integration's own filter math.
 
 The filters are loaded straight from custom_components/.../filters.py, so the
 figure always matches the code. Run with matplotlib available, for example:
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parent.parent
 FILTERS = ROOT / "custom_components/smoothing_analytics_sensors/filters.py"
-OUTPUT = ROOT / "assets/visualization.png"
+OUTPUT = ROOT / "docs/images/visualization.png"
 
 # Integration defaults (const.py)
 LOWPASS_TIME_CONSTANT = 15
