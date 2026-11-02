@@ -130,13 +130,14 @@ async def test_update_chain(
     # The EMA passes its first value through
     assert float(hass.states.get(ids["ema"]).state) == pytest.approx(15.0)
 
-    # 10 s later the EMA blends the new median with alpha = 2 / (20/10 + 1)
+    # 10 s later the EMA blends the new median with alpha = 1 - 0.05 ** (10/20)
     freezer.tick(10)
     await push(hass, "20")
     median_value = float(hass.states.get(ids["median"]).state)
     ema = hass.states.get(ids["ema"])
-    assert ema.attributes["alpha"] == pytest.approx(2 / 3)
-    assert float(ema.state) == pytest.approx(15 + 2 / 3 * (median_value - 15), abs=0.01)
+    alpha = 1 - 0.05**0.5
+    assert ema.attributes["alpha"] == pytest.approx(alpha)
+    assert float(ema.state) == pytest.approx(15 + alpha * (median_value - 15), abs=0.01)
 
     for stage in STAGES:
         state = hass.states.get(ids[stage])

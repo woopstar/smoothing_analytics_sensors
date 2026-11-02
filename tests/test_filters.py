@@ -43,10 +43,22 @@ def test_lowpass_constant_input_stays_constant() -> None:
     assert lowpass_filter(-3.5, -3.5, 15) == pytest.approx(-3.5)
 
 
-def test_ema_alpha_span_formula() -> None:
-    """Alpha follows 2 / (N + 1) with N = time_to_95 / dt."""
-    assert calculate_alpha(120, 1) == pytest.approx(2 / 121)
-    assert calculate_alpha(120, 30) == pytest.approx(0.4)
+def test_ema_alpha_formula() -> None:
+    """Alpha is 1 - 0.05 ** (dt / time_to_95)."""
+    assert calculate_alpha(120, 1) == pytest.approx(1 - 0.05 ** (1 / 120))
+    assert calculate_alpha(120, 120) == pytest.approx(0.95)
+
+
+@pytest.mark.parametrize("dt", [1, 10, 30])
+def test_ema_step_reaches_95_percent_at_time_to_95(dt: int) -> None:
+    """A unit step reaches 95 % at time_to_95, within one update, for any dt."""
+    time_to_95 = 120
+    alpha = calculate_alpha(time_to_95, dt)
+    output, updates = 0.0, 0
+    while output < 0.95 - 1e-9:
+        output = ema_filter(1.0, output, alpha)
+        updates += 1
+    assert abs(updates - time_to_95 / dt) <= 1
 
 
 @pytest.mark.parametrize("dt", [1, 60, 120, 1200, 3600, 86400])
@@ -64,10 +76,10 @@ def test_ema_alpha_without_elapsed_time_keeps_previous_output(dt: int) -> None:
     assert ema_filter(200.0, 1000.0, alpha) == pytest.approx(1000.0)
 
 
-@pytest.mark.parametrize(("dt", "expected"), [(120, 1.0), (1200, 1.0)])
-def test_ema_alpha_clamps_at_one_from_time_to_95(dt: int, expected: float) -> None:
-    """From dt = time_to_95 on, alpha is 1: the output jumps to the input."""
-    assert calculate_alpha(120, dt) == pytest.approx(expected)
+@pytest.mark.parametrize(("dt", "expected"), [(120, 0.95), (240, 0.9975), (1200, 1.0)])
+def test_ema_alpha_after_long_gaps(dt: int, expected: float) -> None:
+    """Long gaps move the output almost all the way, never past the input."""
+    assert calculate_alpha(120, dt) == pytest.approx(expected, abs=1e-6)
 
 
 def test_ema_long_gap_lands_between_previous_output_and_input() -> None:
