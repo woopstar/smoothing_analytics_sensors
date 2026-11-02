@@ -3,6 +3,7 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.selector import selector
@@ -26,13 +27,12 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        self._errors = {}
+        errors: dict[str, str] = {}
 
         # If user_input is not None, the user has submitted the form
         if user_input is not None:
-            # Validate input_sensor and other necessary fields
-            if not user_input.get("input_sensor"):
-                self._errors["input_sensor"] = "required"
+            if not _is_numeric_sensor(self.hass, user_input["input_sensor"]):
+                errors["input_sensor"] = "invalid_sensor"
             else:
                 # Remember the registry id so the input can be renamed later
                 data = _normalize(user_input)
@@ -75,7 +75,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Show the form to the user
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=self._errors
+            step_id="user", data_schema=data_schema, errors=errors
         )
 
     @staticmethod
@@ -116,6 +116,20 @@ class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
         )
 
         return self.async_show_form(step_id="init", data_schema=data_schema)
+
+
+def _is_numeric_sensor(hass, entity_id):
+    """Return True if the sensor exists and has a number, or no value yet."""
+    state = hass.states.get(entity_id)
+    if state is None:
+        return False
+    if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+        return True
+    try:
+        float(state.state)
+    except ValueError:
+        return False
+    return True
 
 
 def _number(minimum, maximum, unit):
