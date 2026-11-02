@@ -415,6 +415,38 @@ async def test_display_precision_is_two_decimals(
         assert options["sensor"]["suggested_display_precision"] == 2
 
 
+async def test_meter_input_is_published_as_measurement(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A total_increasing energy input gives a measurement without device class."""
+    ids = await setup_entry(hass, config_entry)
+    meter = {
+        "unit_of_measurement": "kWh",
+        "device_class": "energy",
+        "state_class": "total_increasing",
+    }
+    for value in ("10", "11", "12"):
+        hass.states.async_set(INPUT_SENSOR, value, meter)
+        await hass.async_block_till_done()
+
+    for stage in STAGES:
+        attributes = hass.states.get(ids[stage]).attributes
+        assert attributes["state_class"] == "measurement"
+        assert attributes["unit_of_measurement"] == "kWh"
+        assert "device_class" not in attributes
+    assert "impossible considering device class" not in caplog.text
+
+
+async def test_state_class_before_first_update(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """The state class is measurement from the start."""
+    ids = await setup_entry(hass, config_entry)
+    assert hass.states.get(ids["lowpass"]).attributes["state_class"] == "measurement"
+
+
 # Known bugs. strict=True turns them into failures once the issue is fixed,
 # so the fix PR has to remove the marker.
 
