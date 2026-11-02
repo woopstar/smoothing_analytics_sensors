@@ -16,6 +16,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.util import dt as dt_util
 
 from custom_components.smoothing_analytics_sensors.const import DOMAIN, ICON
 from custom_components.smoothing_analytics_sensors.utils.misc import (
@@ -274,6 +275,48 @@ async def test_sensors_are_not_polled(
         assert state.last_updated == before[stage].last_updated
         assert state.attributes == before[stage].attributes
     assert hass.states.get(ids["median"]).attributes["data_points"] == [10.0]
+
+
+async def test_dst_change_keeps_positive_interval(
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
+) -> None:
+    """At the autumn DST change local time goes back, the measured Δt does not."""
+    await hass.config.async_set_time_zone("Europe/Copenhagen")
+    # 02:58 CEST, two minutes before clocks go back to 02:00 CET
+    freezer.move_to("2026-10-25T00:58:00+00:00")
+    ids = await setup_entry(hass, config_entry)
+    for value in ("10", "20", "20.0"):
+        freezer.tick(1)
+        await push(hass, value)
+
+    freezer.tick(120)
+    await push(hass, "20")
+
+    lowpass = hass.states.get(ids["lowpass"])
+    assert lowpass.attributes["sensor_update_interval"] == pytest.approx(120)
+    assert dt_util.parse_datetime(lowpass.attributes["last_updated"]).tzinfo
+    ema = hass.states.get(ids["ema"])
+    assert ema.attributes["sensor_update_interval"] == pytest.approx(120)
+    assert 0 < ema.attributes["alpha"] <= 1
+
+
+async def test_restored_naive_timestamp_is_read_as_local_time(
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
+) -> None:
+    """A naive last_updated from older versions is read in the HA time zone."""
+    await hass.config.async_set_time_zone("Europe/Copenhagen")
+    freezer.move_to("2026-11-02T10:00:00+00:00")
+    ids = await preregister(hass, config_entry)
+    # 10:59:00 local (CET, UTC+1) is 60 s before now
+    mock_restore_cache(
+        hass, [State(ids["lowpass"], "10.0", {"last_updated": "2026-11-02T10:59:00"})]
+    )
+    await setup_entry(hass, config_entry)
+
+    await push(hass, "20")
+    assert hass.states.get(ids["lowpass"]).attributes[
+        "sensor_update_interval"
+    ] == pytest.approx(60)
 
 
 # Known bugs. strict=True turns them into failures once the issue is fixed,

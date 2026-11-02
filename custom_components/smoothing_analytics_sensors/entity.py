@@ -1,11 +1,11 @@
 """Shared base sensor: input, restore, subscription and device info."""
 
 import logging
-from datetime import datetime
 
 from homeassistant.components.sensor import RestoreSensor
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, ICON, NAME
 from .utils.misc import get_config_value
@@ -118,13 +118,16 @@ class SmoothingAnalyticsSensor(RestoreSensor):
 
     async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
-        now = datetime.now()
+        now = dt_util.utcnow()
 
-        # Calculate the update interval to be used
-        if self._last_updated is not None:
-            self._update_interval = (
-                now - datetime.fromisoformat(self._last_updated)
-            ).total_seconds()
+        # Calculate the update interval to be used. UTC has no DST jumps.
+        # Older versions stored naive local timestamps; as_utc reads those as
+        # Home Assistant's time zone.
+        last_updated = (
+            dt_util.parse_datetime(self._last_updated) if self._last_updated else None
+        )
+        if last_updated is not None:
+            self._update_interval = (now - dt_util.as_utc(last_updated)).total_seconds()
 
         # Ensure settings are reloaded if config is changed
         self._update_settings()
