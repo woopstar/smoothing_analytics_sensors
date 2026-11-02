@@ -41,6 +41,12 @@ jobs:
             mv "$STAGING/home.md" "$STAGING/Home.md"
           fi
 
+          # Wiki pages have no .md suffix. A relative link to page.md would
+          # open the raw markdown, so rewrite ](page.md) and ](page.md#x).
+          find "$STAGING" -name '*.md' -exec sed -i -E \
+            -e 's#\]\(home\.md(\#[^)]*)?\)#](Home\1)#g' \
+            -e 's#\]\(([A-Za-z0-9_./-]+)\.md(\#[^)]*)?\)#](\1\2)#g' {} +
+
           # Generate _Sidebar.md from the docs/index.md table-of-contents
           python3 .github/scripts/generate_wiki_sidebar.py \
             docs/index.md > "$STAGING/_Sidebar.md"
