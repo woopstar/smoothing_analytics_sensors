@@ -19,6 +19,7 @@ SAS was extracted from the smoothing logic in
 
 | You want to…                      | Read                                      |
 | --------------------------------- | ----------------------------------------- |
+| Compare with the HA helpers       | [Why SAS](why-sas.md)                     |
 | Install SAS                       | [Installation](installation.md)           |
 | Pick filter settings              | [Configuration](configuration.md)         |
 | Know which entities you get       | [Sensors reference](sensors-reference.md) |
