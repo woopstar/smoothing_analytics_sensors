@@ -1,2 +1,0 @@
-voluptuous==0.16.0
-pytz==2026.6
