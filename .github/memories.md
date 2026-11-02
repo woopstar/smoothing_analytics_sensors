@@ -19,6 +19,7 @@ Architecture, conventions and lessons for Smoothing Analytics Sensors. Read befo
 | `config_flow.py`                   | Config flow (`user` step) and options flow (`init` step)          |
 | `const.py`                         | Domain, name, icon, default filter parameters                     |
 | `entity.py`                        | `SmoothingAnalyticsEntity` base: device info                      |
+| `diagnostics.py`                   | Config entry diagnostics: settings and internal state per stage   |
 | `sensor.py`                        | Platform setup: builds the lowpass → median → EMA stack per entry |
 | `custom_sensors/lowpass_sensor.py` | First-order lowpass on the raw input sensor                       |
 | `custom_sensors/median_sensor.py`  | Moving median over the last N lowpass values                      |
