@@ -29,8 +29,8 @@ The input sensor cannot be changed. Delete the entry and add a new one instead.
 
 ### When Options Take Effect
 
-The sensors read the parameters again on every update. A new lowpass constant, median window or
-EMA time applies from the next input update. The entry is not reloaded.
+Saving the form reloads the entry. New parameters apply right away. A new name updates the
+entry title and the device name. The sensors keep their restored values across the reload.
 
 ## Parameter Guide
 

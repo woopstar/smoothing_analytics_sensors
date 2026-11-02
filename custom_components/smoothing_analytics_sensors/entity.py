@@ -3,6 +3,7 @@ import logging
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN, ICON, NAME
+from .utils.misc import get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +35,6 @@ class SmoothingAnalyticsEntity(Entity):
 
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", NAME),
+            "name": get_config_value(self.config_entry, "device_name", NAME),
             "manufacturer": NAME,
         }
