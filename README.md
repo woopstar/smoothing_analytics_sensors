@@ -7,6 +7,8 @@
 
 ![Icon](assets/icon.png)
 
+**Documentation:** [Wiki](https://github.com/woopstar/smoothing_analytics_sensors/wiki) · [Configuration](docs/configuration.md) · [Filter math](docs/filter-math.md) · [Troubleshooting](docs/troubleshooting.md)
+
 The **Smoothing Analytics Sensors** integration is designed to smooth out short-term data spikes from any input sensor. It works by applying a series of filters (lowpass, moving median, and EMA) to the raw sensor data, ensuring that brief but significant changes do not heavily impact the final sensor reading.
 
 ## Derived from the Huawei Solar Battery Optimization Project
@@ -61,7 +63,7 @@ The **EMA sensor** was preferred for this setup because it responds quickly to d
 
 - **Lowpass Filter**: The default time constant is 15 seconds to smooth out fast fluctuations.
 - **Moving Median**: The default window size is 15 data points to filter extreme outliers.
-- **EMA**: The default smoothing window is 300 seconds (5 minutes), ensuring only sustained changes affect the sensor readings.
+- **EMA**: The default desired time to reach 95 % is 120 seconds, so only sustained changes affect the sensor readings.
 
 ---
 
@@ -72,7 +74,7 @@ The **EMA sensor** was preferred for this setup because it responds quickly to d
 The lowpass filter is applied to the raw sensor data and is used to remove short-term spikes and fluctuations. The time constant controls how quickly it reacts to changes.
 
 - **Purpose**: Smooths out rapid spikes from the raw data.
-- **Time Constant**: 15 seconds. A higher value smooths more but reacts slower.
+- **Time Constant**: 15 by default. The newest value gets weight 1/15 per update. A higher value smooths more but reacts slower.
 - **Rationale**: A 15-second time constant is ideal for handling short spikes from appliances while responding to longer-term changes.
 
 ---
@@ -92,12 +94,14 @@ The moving median filter is applied to the lowpass-filtered data to remove any r
 The final smoothing step applies an Exponential Moving Average to the median-filtered data. This gives more weight to recent data points, making the sensor responsive to long-term trends while filtering out short-term noise.
 
 - **Purpose**: Applies final smoothing, focusing on recent data trends.
-- **Smoothing Window**: 300 seconds (5 minutes).
-- **Alpha Calculation**: Alpha is calculated using the following formula:
+- **Desired Time to Reach 95 %**: 120 seconds by default.
+- **Alpha Calculation**: Alpha is recalculated on every update from the time since the previous update:
 
-  ```yaml
-  alpha = 2 / (smoothing_window_seconds + 1)
+  ```text
+  alpha = 2 / (desired_time_to_95 / seconds_since_last_update + 1)
   ```
+
+  See [Filter math](docs/filter-math.md#ema) for how this behaves in practice.
 
 - **Rationale**: Ensures the sensor reacts slowly to spikes while capturing long-term trends.
 
@@ -170,27 +174,27 @@ time = np.arange(0, 100, 1)
 raw_data = np.sin(time * 0.2) + np.random.normal(0, 0.5, len(time)) + (np.random.choice([0, 3], size=len(time), p=[0.95, 0.05]))
 
 # Apply Lowpass Filter
- def lowpass_filter(data, time_constant=15):
-     filtered_data = np.zeros_like(data)
-     filtered_data[0] = data[0]
+def lowpass_filter(data, time_constant=15):
+    filtered_data = np.zeros_like(data)
+    filtered_data[0] = data[0]
 
-     # Calculate coefficients A and B based on the time constant
-     B = 1.0 / time_constant
-     A = 1.0 - B
+    # Calculate coefficients A and B based on the time constant
+    B = 1.0 / time_constant
+    A = 1.0 - B
 
-     # Apply lowpass filter across the dataset
-     for t in range(1, len(data)):
-         filtered_data[t] = A * filtered_data[t - 1] + B * data[t]
+    # Apply lowpass filter across the dataset
+    for t in range(1, len(data)):
+        filtered_data[t] = A * filtered_data[t - 1] + B * data[t]
 
-     return filtered_data
+    return filtered_data
 
- lowpass_data = lowpass_filter(raw_data)
+lowpass_data = lowpass_filter(raw_data)
 
 # Apply Moving Median Filter
 def moving_median_filter(data, window_size=15):
     filtered_data = np.zeros_like(data)
     for t in range(len(data)):
-        filtered_data[t] = np.median(data[max(0, t - window_size + 1):t + 1])
+      filtered_data[t] = np.median(data[max(0, t - window_size + 1):t + 1])
     return filtered_data
 
 median_data = moving_median_filter(lowpass_data, window_size=5)
@@ -200,7 +204,7 @@ def ema_filter(data, alpha=0.1):
     ema_data = np.zeros_like(data)
     ema_data[0] = data[0]
     for t in range(1, len(data)):
-        ema_data[t] = alpha * data[t] + (1 - alpha) * ema_data[t - 1]
+      ema_data[t] = alpha * data[t] + (1 - alpha) * ema_data[t - 1]
     return ema_data
 
 ema_data = ema_filter(median_data, alpha=0.1)
