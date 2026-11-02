@@ -340,6 +340,33 @@ async def test_restore_keeps_update_interval(
     assert ema["alpha"] == pytest.approx(calculate_alpha(20, 7))
 
 
+async def test_small_inputs_converge(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Steps below the display precision are not rounded away."""
+    ids = await setup_entry(hass, config_entry)
+    await push(hass, "0")
+    for i in range(30):
+        # Alternate the string so every push is a state change
+        await push(hass, "0.004" if i % 2 else "0.0040")
+
+    assert float(hass.states.get(ids["lowpass"]).state) == pytest.approx(
+        0.004, rel=0.01
+    )
+    assert float(hass.states.get(ids["ema"]).state) > 0
+
+
+async def test_display_precision_is_two_decimals(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """The UI shows 2 decimals by default."""
+    ids = await setup_entry(hass, config_entry)
+    registry = er.async_get(hass)
+    for stage in STAGES:
+        options = registry.async_get(ids[stage]).options
+        assert options["sensor"]["suggested_display_precision"] == 2
+
+
 # Known bugs. strict=True turns them into failures once the issue is fixed,
 # so the fix PR has to remove the marker.
 

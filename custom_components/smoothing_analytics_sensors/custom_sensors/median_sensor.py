@@ -52,7 +52,7 @@ class MedianSensor(SmoothingAnalyticsSensor):
             self._data_points, input_value, self._sampling_size
         )
         if median is not None:
-            self._state = round(median, 2)
+            self._state = median
 
     def _restore_extra(self, old_state):
         self._data_points = old_state.attributes.get("data_points", []) or []

@@ -25,6 +25,9 @@ class SmoothingAnalyticsSensor(RestoreSensor):
     _attr_has_entity_name = True
     # Event-driven: a stage only updates when its upstream changes state
     _attr_should_poll = False
+    # Full precision internally, 2 decimals in the UI. Rounding inside the
+    # recursion would lock small inputs at 0.
+    _attr_suggested_display_precision = 2
 
     _type: str
     _name_prefix: str
@@ -167,7 +170,7 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         if old_state is not None:
             _LOGGER.info("Restoring state for %s", self.unique_id)
             try:
-                self._state = round(float(old_state.state), 2)
+                self._state = float(old_state.state)
                 self._restore_extra(old_state)
             except (ValueError, TypeError):
                 _LOGGER.warning(

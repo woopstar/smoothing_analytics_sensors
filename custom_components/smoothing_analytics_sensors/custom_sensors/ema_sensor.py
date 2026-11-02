@@ -56,9 +56,7 @@ class EmaSensor(SmoothingAnalyticsSensor):
         """Blend the input with alpha, or pass the first value through."""
         self._previous_value = self._state
         if self._previous_value is not None:
-            self._state = round(
-                ema_filter(input_value, self._previous_value, self._alpha), 2
-            )
+            self._state = ema_filter(input_value, self._previous_value, self._alpha)
         else:
             self._state = input_value
 
