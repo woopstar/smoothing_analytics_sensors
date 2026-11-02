@@ -58,8 +58,9 @@ Values are read with `get_config_value()`: options first, then data, then defaul
 - Config lookup: `utils.misc.get_config_value(entry, key, default)`. Never read
   `entry.options` or `entry.data` directly for filter parameters.
 - Unique IDs: `sas_<type>_<hash>`. Changing this breaks history and needs a migration.
-- `<hash>` comes from `data["input_sensor"]`, the entity_id at creation. Never rewrite it.
-  The current input entity_id is resolved from `data["input_entity_uuid"]` (config entry v2).
+- `<hash>` comes from `data["hash_source"]`, or `data["input_sensor"]` when there is none. Reconfigure
+  sets `hash_source` to the first input. The current input entity_id comes from
+  `utils.misc.current_input_sensor()` (registry id `input_entity_uuid`, then `input_sensor`).
 
 ## Known Pitfalls
 

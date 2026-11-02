@@ -11,13 +11,21 @@
           "desired_time_to_95": "EMA Ønsket tid til at nå 95% (sekunder)",
           "device_name": "Navn"
         }
+      },
+      "reconfigure": {
+        "title": "Skift input-sensor",
+        "description": "Vælg en ny input-sensor. Udjævningssensorerne beholder deres entity-ID'er og historik.",
+        "data": {
+          "input_sensor": "Input Sensor"
+        }
       }
     },
     "error": {
       "invalid_sensor": "Vælg en sensor, der findes og har en numerisk værdi."
     },
     "abort": {
-      "already_configured": "Denne input-sensor har allerede en Smoothing Analytics-enhed."
+      "already_configured": "Denne input-sensor har allerede en Smoothing Analytics-enhed.",
+      "reconfigure_successful": "Input-sensoren er skiftet."
     }
   },
   "options": {

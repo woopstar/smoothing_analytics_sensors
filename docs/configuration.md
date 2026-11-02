@@ -32,13 +32,19 @@ SAS allows one entry per input sensor. Adding the same sensor again stops with "
 
 The form starts with the current values. Ranges are the same as in the config flow.
 
-The input sensor cannot be swapped for another sensor. Delete the entry and add a new one instead.
 Renaming the input sensor's entity_id is fine: SAS stores its registry id and follows the rename.
 
 ### When Options Take Effect
 
 Saving the form reloads the entry. New parameters apply right away. A new name updates the
 entry title and the device name. The sensors keep their restored values across the reload.
+
+## Change the Input Sensor (Reconfigure)
+
+**Settings → Devices & services → Smoothing Analytics Sensors → ⋮ → Reconfigure** lets you pick a
+new input sensor. The SAS entities keep their entity IDs, unique IDs and history. The filters
+continue from their last values and move toward the new input. The new input must not already
+have its own SAS entry.
 
 ## Parameter Guide
 
