@@ -97,10 +97,10 @@ use labels defined there.
 
 ## Images
 
-| File | Made by |
-| --- | --- |
+| File                                                                          | Made by                      |
+| ----------------------------------------------------------------------------- | ---------------------------- |
 | `custom_components/smoothing_analytics_sensors/brand/icon.png`, `icon@2x.png` | `scripts/plot_brand_icon.py` |
-| `docs/images/visualization.png` | `scripts/plot_filters.py` |
+| `docs/images/visualization.png`                                               | `scripts/plot_filters.py`    |
 
 Run either with `uv run --no-project --with matplotlib python scripts/<script>.py`.
 
