@@ -25,7 +25,8 @@ The name becomes the config entry title and the device name.
 | Median Sampling Size           | `median_sampling_size`  | 1–60  |
 | EMA Desired Time to Reach 95 % | `desired_time_to_95`    | 1–600 |
 
-The input sensor cannot be changed. Delete the entry and add a new one instead.
+The input sensor cannot be swapped for another sensor. Delete the entry and add a new one instead.
+Renaming the input sensor's entity_id is fine: SAS stores its registry id and follows the rename.
 
 ### When Options Take Effect
 

@@ -1,5 +1,7 @@
 import logging
 
+from homeassistant.helpers import entity_registry as er
+
 from .const import (
     DEFAULT_EMA_DESIRED_TIME_TO_95,
     DEFAULT_LOW_PASS,
@@ -17,8 +19,16 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Smoothing Analytics sensors from a config entry."""
     config = config_entry.data
 
-    # Extract configuration parameters
-    input_sensor = config.get("input_sensor")
+    # The hash and unique IDs come from the input entity_id at creation time.
+    # The current entity_id is resolved from the registry id, so a renamed
+    # input keeps working after a restart.
+    original_input_sensor = config.get("input_sensor")
+    input_sensor = original_input_sensor
+    if input_entity_uuid := config.get("input_entity_uuid"):
+        input_sensor = (
+            er.async_resolve_entity_id(er.async_get(hass), input_entity_uuid)
+            or original_input_sensor
+        )
 
     lowpass_time_constant = get_config_value(
         config_entry, "lowpass_time_constant", DEFAULT_LOW_PASS
@@ -33,7 +43,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
 
     # Generate a unique hash based on the input sensor
-    sensor_hash = generate_md5_hash(input_sensor)
+    sensor_hash = generate_md5_hash(original_input_sensor)
 
     # Median and EMA find their upstream stage by its unique_id
     lowpass_unique_id = f"sas_lowpass_{sensor_hash}"
