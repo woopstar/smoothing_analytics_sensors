@@ -14,6 +14,8 @@ SAS is configured in the UI. There is no YAML configuration.
 
 The name becomes the config entry title and the device name.
 
+SAS allows one entry per input sensor. Adding the same sensor again stops with "already configured".
+
 ## Options Flow (Configure)
 
 **Settings → Devices & services → Smoothing Analytics Sensors → Configure** lets you change:

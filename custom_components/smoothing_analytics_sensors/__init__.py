@@ -3,6 +3,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
+from .const import DOMAIN
 from .utils.misc import get_config_value
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
@@ -10,9 +11,23 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Smoothing Analytics Sensors from a config entry."""
+    _async_set_missing_unique_id(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
+
+
+def _async_set_missing_unique_id(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Give entries created before the duplicate check their unique_id."""
+    if entry.unique_id is not None:
+        return
+    unique_id = entry.data.get("input_entity_uuid") or entry.data["input_sensor"]
+    if any(
+        other.unique_id == unique_id
+        for other in hass.config_entries.async_entries(DOMAIN)
+    ):
+        return
+    hass.config_entries.async_update_entry(entry, unique_id=unique_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

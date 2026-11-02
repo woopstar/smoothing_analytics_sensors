@@ -15,6 +15,9 @@
     },
     "error": {
       "invalid_sensor": "Invalid input sensor. Please choose a valid sensor."
+    },
+    "abort": {
+      "already_configured": "This input sensor already has a Smoothing Analytics entry."
     }
   },
   "options": {
