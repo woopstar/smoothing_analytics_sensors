@@ -46,9 +46,8 @@ class LowpassSensor(SmoothingAnalyticsSensor):
         """Blend the input into the previous output, or pass the first value through."""
         self._previous_value = self._state
         if self._previous_value is not None:
-            self._state = round(
-                lowpass_filter(input_value, self._previous_value, self._time_constant),
-                2,
+            self._state = lowpass_filter(
+                input_value, self._previous_value, self._time_constant
             )
         else:
             self._state = input_value

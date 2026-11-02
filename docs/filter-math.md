@@ -15,7 +15,8 @@ There is no periodic tick. While the input stays constant, the outputs stay wher
 the median window only holds real upstream readings. `Δt` is always the time between two real
 updates, measured in UTC, so DST changes and time zone changes do not affect it.
 
-Output is rounded to 2 decimals after every update.
+Filters keep full precision. The UI shows 2 decimals by default (`suggested_display_precision`).
+Change it per entity in the entity settings (**Display precision**).
 
 ## Lowpass
 
