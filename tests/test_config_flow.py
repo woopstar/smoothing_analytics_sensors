@@ -123,3 +123,95 @@ async def test_other_input_is_allowed(hass: HomeAssistant) -> None:
     assert (await _submit(hass, "sensor.house_load"))[
         "type"
     ] is FlowResultType.CREATE_ENTRY
+
+
+def _defaults(schema) -> dict:
+    """Map each field of a form schema to its default value."""
+    return {str(key): key.default() for key in schema.schema if hasattr(key, "default")}
+
+
+def _ranges(schema) -> dict:
+    """Map each number field of a form schema to its (min, max)."""
+    ranges = {}
+    for key, value in schema.schema.items():
+        config = getattr(value, "config", {})
+        if "min" in config:
+            ranges[str(key)] = (config["min"], config["max"])
+    return ranges
+
+
+async def test_options_form_shows_current_values(hass: HomeAssistant) -> None:
+    """The options form starts from the values chosen at setup, not built-in defaults."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Grid power",
+        version=2,
+        data={
+            "input_sensor": "sensor.grid_power",
+            "device_name": "Grid power",
+            "lowpass_time_constant": 5,
+            "median_sampling_size": 7,
+            "desired_time_to_95": 300,
+        },
+        options={"desired_time_to_95": 240},
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert _defaults(result["data_schema"]) == {
+        "device_name": "Grid power",
+        "lowpass_time_constant": 5,
+        "median_sampling_size": 7,
+        "desired_time_to_95": 240,
+    }
+
+    with patch(
+        "custom_components.smoothing_analytics_sensors.async_setup_entry",
+        return_value=True,
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                "device_name": "Grid power",
+                "lowpass_time_constant": 5.0,
+                "median_sampling_size": 9.0,
+                "desired_time_to_95": 240.0,
+            },
+        )
+        await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["median_sampling_size"] == 9
+    assert isinstance(entry.options["median_sampling_size"], int)
+
+
+async def test_config_and_options_flow_use_the_same_ranges(hass: HomeAssistant) -> None:
+    """Both flows offer the same limits for every filter parameter."""
+    user = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=2, data={"input_sensor": "sensor.grid_power"}
+    )
+    entry.add_to_hass(hass)
+    options = await hass.config_entries.options.async_init(entry.entry_id)
+
+    ranges = _ranges(user["data_schema"])
+    assert ranges == _ranges(options["data_schema"])
+    assert ranges["desired_time_to_95"] == (10, 600)
+
+
+async def test_user_step_stores_median_window_as_int(hass: HomeAssistant) -> None:
+    """The number selector returns floats; the window is stored as an int."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    with patch(
+        "custom_components.smoothing_analytics_sensors.async_setup_entry",
+        return_value=True,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"input_sensor": "sensor.grid_power", "median_sampling_size": 15.0},
+        )
+    assert result["data"]["median_sampling_size"] == 15
+    assert isinstance(result["data"]["median_sampling_size"], int)
