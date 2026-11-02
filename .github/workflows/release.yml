@@ -8,13 +8,18 @@ on:
 env:
   COMPONENT_DIR: smoothing_analytics_sensors
 
+permissions:
+  contents: read
+
 jobs:
   release_zip_file:
     name: Prepare release asset
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Update manifest.json version to ${{ github.event.release.tag_name }}
         run: |
           python3 ${{ github.workspace }}/.github/scripts/update_hacs_manifest.py --version ${{ github.event.release.tag_name }} --path /custom_components/smoothing_analytics_sensors/
@@ -24,7 +29,7 @@ jobs:
           git config user.email github-actions@github.com
           git add ./custom_components/smoothing_analytics_sensors/manifest.json
           git commit -m "Updated manifest.json"
-          git push origin HEAD:main
+          git push origin HEAD:${{ github.event.release.target_commitish }}
       - name: Create zip
         run: |
           cd custom_components/smoothing_analytics_sensors

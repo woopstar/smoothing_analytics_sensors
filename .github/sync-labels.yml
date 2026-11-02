@@ -1,0 +1,131 @@
+# Canonical manifest of every label used in this repository.
+#
+# This file is the single source of truth for label existence (name, color,
+# description). Synced to GitHub by workflows/sync-labels.yaml on every push
+# to main that touches this file.
+#
+# workflows/auto-label.yml (PR labeling from conventional-commit type) and
+# release-drafter.yml (changelog categorization / version resolution) must
+# only reference label names that are defined here.
+---
+- name: "breaking-change"
+  color: b60205
+  description: "Something in the release is breaking current functionality"
+- name: "bug"
+  color: d73a4a
+  description: "Something isn't working"
+- name: "bug-fix"
+  color: 4ad73a
+  description: "Fixed things that didn't work but now do"
+- name: "build"
+  color: 1d76db
+  description: "Changes to the build system or CI/CD pipeline"
+- name: "chore"
+  color: fef2c0
+  description: "Maintenance tasks, cleanup, and housekeeping"
+- name: "config"
+  color: e4e669
+  description: "Configuration changes"
+- name: "dependencies"
+  color: 9F5E8B
+  description: "Updates to dependencies"
+- name: "documentation"
+  color: 0075ca
+  description: "Improvements or additions to documentation"
+- name: "duplicate"
+  color: 799799
+  description: "This issue or pull request already exists"
+- name: "enhancement"
+  color: 0E8A16
+  description: "New feature or request"
+- name: "help-wanted"
+  color: D46EE9
+  description: "Extra attention is needed"
+- name: "invalid"
+  color: 46311F
+  description: "This doesn't seem right"
+- name: "LOCKED"
+  color: ff0000
+  description: "This thread is locked"
+- name: "performance"
+  color: fbca04
+  description: "Performance and efficiency improvements"
+- name: "major"
+  color: 2fff00
+  description: "Bump major version number"
+- name: "minor"
+  color: fdff12
+  description: "Bump minor version number"
+- name: "patch"
+  color: ff9a00
+  description: "Bump patch version number"
+- name: "pr-on-hold"
+  color: 8c3d24
+  description: "This PR is on hold and not scheduled for merge currently"
+- name: "question"
+  color: 9d59d4
+  description: "Further information is requested"
+- name: "skip-changelog"
+  color: f1a7f4
+  description: "Skips changelog on release"
+- name: "wontfix"
+  color: 424742
+  description: "This will not be worked on"
+- name: "size/XS"
+  color: b8bab8
+  description: "Denotes a PR that changes 0-9 lines"
+- name: "size/S"
+  color: b8bab8
+  description: "Denotes a PR that changes 10-29 lines"
+- name: "size/M"
+  color: b8bab8
+  description: "Denotes a PR that changes 30-99 lines"
+- name: "size/L"
+  color: b8bab8
+  description: "Denotes a PR that changes 100-499 lines"
+- name: "size/XL"
+  color: b8bab8
+  description: "Denotes a PR that changes 500-999 lines"
+- name: "size/XXL"
+  color: b8bab8
+  description: "Denotes a PR that changes 1000+ lines"
+
+# Issue triage taxonomy: which subsystem an issue touches.
+- name: "area:config"
+  color: bfd4f2
+  description: "Configuration, migration, validation, and defaults"
+- name: "area:docs"
+  color: 0075ca
+  description: "Documentation and troubleshooting"
+- name: "area:home-assistant"
+  color: 006b75
+  description: "Home Assistant entities, device info, manifest and platform APIs"
+- name: "area:refactor"
+  color: c2e0c6
+  description: "Structure changes without intended behavior change"
+- name: "area:tests"
+  color: c5def5
+  description: "Unit tests, HA mocks, regression tests, and benchmarks"
+
+# Issue triage taxonomy: how urgent an issue is.
+- name: "priority:p0"
+  color: b60205
+  description: "Wrong values, leaks or broken setup. Fix first"
+- name: "priority:p1"
+  color: d93f0b
+  description: "Important correctness or HA compliance improvement"
+- name: "feedback"
+  color: ededed
+  description: "Community feedback and bug-report megathreads"
+- name: "area:filters"
+  color: 5319e7
+  description: "Lowpass, median and EMA filter math"
+- name: "area:lifecycle"
+  color: 5319e7
+  description: "Setup, unload, reload and listener lifecycle"
+- name: "area:ci"
+  color: 5319e7
+  description: "GitHub Actions, release and tooling"
+- name: "review-2026-11"
+  color: c5def5
+  description: "Found in the November 2026 full code review"

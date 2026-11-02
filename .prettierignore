@@ -1,0 +1,6 @@
+# Home Assistant owns the shape of these files.
+custom_components/**/*.json
+
+.venv/
+htmlcov/
+coverage.xml

@@ -185,5 +185,5 @@ class LowpassSensor(SmoothingAnalyticsEntity, RestoreEntity):
             )
         else:
             _LOGGER.error(
-                f"Failed to track state changes, input_sensor is not resolved."
+                "Failed to track state changes, input_sensor is not resolved."
             )
