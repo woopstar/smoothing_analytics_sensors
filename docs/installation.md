@@ -7,7 +7,19 @@
 | Home Assistant | 2024.11.0 or newer (see `hacs.json`)       |
 | Input sensor   | Any `sensor.*` entity with a numeric state |
 
-## HACS (Recommended)
+## Marketplace (Home Assistant 2026.11 and Newer)
+
+Home Assistant 2026.11 replaces HACS with the built-in **Marketplace**. SAS is not in the
+Marketplace catalog yet, so add it from its link:
+
+1. **Settings → Marketplace → Add from link**.
+2. Paste `https://github.com/woopstar/smoothing_analytics_sensors` and pick **Integration**.
+3. Click **Download**, then restart Home Assistant.
+
+Already installed through HACS? The Marketplace migrates it on the first start after the
+update. You do not need to do anything.
+
+## HACS (Home Assistant 2026.10 and Older)
 
 1. Open **HACS → Integrations**.
 2. Open the menu (three dots) → **Custom repositories**.
@@ -24,14 +36,20 @@
 
 ## Add an Entry
 
-1. **Settings → Devices & services → Add integration**.
-2. Search for **Smoothing Analytics Sensors**.
+SAS is a helper. New entries are created from the Helpers tab:
+
+1. **Settings → Devices & services → Helpers → Create helper**.
+2. Pick **Smoothing Analytics Sensors**.
 3. Pick the input sensor and filter parameters. See [Configuration](configuration.md).
 
-Add one entry per sensor you want to smooth.
+Add one entry per sensor you want to smooth. The three sensors of each entry are listed under
+**Helpers**. The entry itself, with **Configure**, **Reconfigure** and diagnostics, is still at
+**Settings → Devices & services → Smoothing Analytics Sensors**.
 
 ## Remove
 
 1. **Settings → Devices & services → Smoothing Analytics Sensors**.
-2. Open the entry menu → **Delete**.
-3. Remove the integration in HACS if you no longer need it.
+2. Open the menu of each entry → **Delete**. This removes its three sensors.
+3. Remove the download: **Settings → Marketplace** (2026.11 and newer) or **HACS** (older),
+   open **Smoothing Analytics Sensors** → **Remove**.
+4. Restart Home Assistant.

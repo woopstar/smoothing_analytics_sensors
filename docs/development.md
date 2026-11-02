@@ -55,7 +55,7 @@ the marker.
 | Workflow              | Trigger                     | Purpose                                     |
 | --------------------- | --------------------------- | ------------------------------------------- |
 | `lint-and-test.yml`   | push to main, PR            | Lint, validate, typing, translations, tests |
-| `hacs-validate.yml`   | push, nightly               | Hassfest and HACS validation                |
+| `hacs-validate.yml`   | push, PR, nightly, manual   | Hassfest and HACS validation, no ignores    |
 | `semantic-title.yml`  | PR opened/edited            | PR title must follow Conventional Commits   |
 | `auto-label.yml`      | PR                          | Labels from the Conventional Commits type   |
 | `check-on-hold.yml`   | PR                          | Blocks merge while `pr-on-hold` is set      |
@@ -99,4 +99,4 @@ use labels defined there.
 
 1. Merge PRs with correct labels (`bug`, `enhancement`, `breaking-change`, `major`/`minor`/`patch`).
 2. Review the draft release made by Release Drafter.
-3. Publish it. `release.yml` writes the version into `manifest.json` and uploads the zip for HACS.
+3. Publish it. `release.yml` writes the version into `manifest.json` and uploads the zip for the Marketplace and HACS.
