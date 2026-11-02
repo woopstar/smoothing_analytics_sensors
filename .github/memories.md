@@ -58,6 +58,8 @@ Values are read with `get_config_value()`: options first, then data, then defaul
 ## Known Pitfalls
 
 - OneDrive/iCloud checkouts flip the executable bit. Run `git config core.fileMode false`.
+  New shell scripts then need `git update-index --chmod=+x <file>`, or CI fails with exit 126.
+- Keep the venv outside synced folders: `SAS_VENV=~/.cache/sas/venv`.
 - The GitHub wiki must have one page created in the UI before `sync-wiki.yml` can push.
 - Translation keys drive only flow strings today. Entity names are hard-coded in each
   sensor's `name` property.
