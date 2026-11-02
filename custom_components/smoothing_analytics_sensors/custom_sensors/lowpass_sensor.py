@@ -14,6 +14,10 @@ class LowpassSensor(SmoothingAnalyticsSensor):
     """Lowpass filtered sensor with persistent state, precision of 2 decimal places, and device support."""
 
     _type = "lowpass"
+    # Fast-changing attributes stay out of the database
+    _unrecorded_attributes = frozenset(
+        {"last_updated", "previous_value", "sensor_update_interval"}
+    )
     _name_prefix = "Lowpass Filtered Sensor"
 
     def __init__(self, input_sensor, time_constant, sensor_hash, config_entry):

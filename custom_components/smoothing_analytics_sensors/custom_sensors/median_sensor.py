@@ -14,6 +14,17 @@ class MedianSensor(SmoothingAnalyticsSensor):
     """Median filtered sensor with persistent state and device support, based on unique_id."""
 
     _type = "median"
+    # Fast-changing attributes stay out of the database. Restore reads the
+    # window from the restore cache, not from the recorder.
+    _unrecorded_attributes = frozenset(
+        {
+            "data_points",
+            "data_points_count",
+            "last_updated",
+            "missing_data_points",
+            "sensor_update_interval",
+        }
+    )
     _name_prefix = "Median Filtered Sensor"
 
     def __init__(self, input_unique_id, sampling_size, sensor_hash, config_entry):
