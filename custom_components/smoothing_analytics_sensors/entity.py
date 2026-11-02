@@ -2,7 +2,11 @@
 
 import logging
 
-from homeassistant.components.sensor import RestoreSensor
+from homeassistant.components.sensor import (
+    DEVICE_CLASS_STATE_CLASSES,
+    RestoreSensor,
+    SensorStateClass,
+)
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
@@ -26,6 +30,8 @@ class SmoothingAnalyticsSensor(RestoreSensor):
     _attr_has_entity_name = True
     # Event-driven: a stage only updates when its upstream changes state
     _attr_should_poll = False
+    # A smoothed value is always a measurement, also for a meter input
+    _attr_state_class = SensorStateClass.MEASUREMENT
     # Full precision internally, 2 decimals in the UI. Rounding inside the
     # recursion would lock small inputs at 0.
     _attr_suggested_display_precision = 2
@@ -52,7 +58,6 @@ class SmoothingAnalyticsSensor(RestoreSensor):
         self._last_updated = None
         self._unit_of_measurement = None
         self._device_class = None
-        self._state_class = None
         self._update_interval = 1
         self._update_settings()
 
@@ -84,10 +89,6 @@ class SmoothingAnalyticsSensor(RestoreSensor):
     @property
     def device_class(self):
         return self._device_class
-
-    @property
-    def state_class(self):
-        return self._state_class
 
     @property
     def device_info(self):
@@ -176,10 +177,21 @@ class SmoothingAnalyticsSensor(RestoreSensor):
             )
             return
 
-        # Follow unit, device class and state class of the input
+        # Follow unit and device class of the input. A device class that does
+        # not allow a measurement (energy, gas, water, ...) is dropped.
         self._unit_of_measurement = input_state.attributes.get("unit_of_measurement")
-        self._device_class = input_state.attributes.get("device_class")
-        self._state_class = input_state.attributes.get("state_class")
+        device_class = input_state.attributes.get("device_class")
+        allowed = DEVICE_CLASS_STATE_CLASSES.get(device_class)
+        if allowed is not None and SensorStateClass.MEASUREMENT not in allowed:
+            _LOGGER.debug(
+                "Input %s has device class %s, which allows no measurement. "
+                "Publishing %s without a device class",
+                input_entity_id,
+                device_class,
+                self.unique_id,
+            )
+            device_class = None
+        self._device_class = device_class
 
         self._set_available(True)
         self._apply(input_value)
