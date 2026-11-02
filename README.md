@@ -98,7 +98,7 @@ The final smoothing step applies an Exponential Moving Average to the median-fil
 - **Alpha Calculation**: Alpha is recalculated on every update from the time since the previous update:
 
   ```text
-  alpha = 2 / (desired_time_to_95 / seconds_since_last_update + 1)
+  alpha = min(1, 2 / (desired_time_to_95 / seconds_since_last_update + 1))
   ```
 
   See [Filter math](docs/filter-math.md#ema) for how this behaves in practice.

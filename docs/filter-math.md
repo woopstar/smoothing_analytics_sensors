@@ -56,7 +56,7 @@ y'     = median(window)        once len(window) ≥ N
 
 ```
 N  = desired_time_to_95 / Δt
-α  = 2 / (N + 1)
+α  = min(1, 2 / (N + 1))
 y' = α · x + (1 − α) · y
 ```
 
@@ -80,16 +80,15 @@ For an exact 95 % at `T95` the coefficient would be `α = 1 − 0.05^(Δt / T95)
 
 ### Large Gaps
 
-When `Δt > desired_time_to_95`, `α > 1`:
+Without a limit, `Δt > desired_time_to_95` would give `α > 1` and the output would overshoot the
+input. This happens after a restart (the restored `last_updated` is old) or after the input was
+`unavailable` for a while. α is therefore clamped:
 
-| desired_time_to_95 | Δt   | α    |
-| ------------------ | ---- | ---- |
-| 120                | 600  | 1.67 |
-| 120                | 3600 | 1.94 |
-
-With `α > 1` the output overshoots the input. This can happen after a restart (the restored
-`last_updated` is old) or after the input was `unavailable` for a while. Tracked in the issues
-labeled `area:filters`.
+| Δt                     | α           | Output                            |
+| ---------------------- | ----------- | --------------------------------- |
+| `≤ 0` (same instant)   | 0           | Unchanged                         |
+| `0 < Δt < T95`         | `2 / (N+1)` | Between previous output and input |
+| `≥ desired_time_to_95` | 1           | Jumps to the input                |
 
 ## Stacking Delay
 
