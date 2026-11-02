@@ -52,11 +52,6 @@ class EmaSensor(SmoothingAnalyticsSensor):
             "unique_id": self.unique_id,
         }
 
-    async def async_update(self):
-        """Manually trigger the sensor update."""
-        # The EMA only republishes its state; it never re-reads the median here
-        self.async_write_ha_state()
-
     def _apply(self, input_value):
         """Blend the input with alpha, or pass the first value through."""
         self._previous_value = self._state

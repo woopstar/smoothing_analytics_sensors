@@ -23,6 +23,8 @@ class SmoothingAnalyticsSensor(RestoreSensor):
 
     _attr_icon = ICON
     _attr_has_entity_name = True
+    # Event-driven: a stage only updates when its upstream changes state
+    _attr_should_poll = False
 
     _type: str
     _name_prefix: str
@@ -113,10 +115,6 @@ class SmoothingAnalyticsSensor(RestoreSensor):
                 self._input_unique_id,
             )
         return self._input_entity_id
-
-    async def async_update(self):
-        """Manually trigger the sensor update."""
-        await self._handle_update(event=None)
 
     async def _handle_update(self, event):
         """Handle the sensor state update (for both manual and state change)."""
