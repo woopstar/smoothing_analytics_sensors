@@ -5,12 +5,12 @@
 [![License][license-shield]][license]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-![Icon](assets/icon.png)
+![Icon](custom_components/smoothing_analytics_sensors/brand/icon.png)
 
 Smooth any numeric Home Assistant sensor so short spikes do not drive your automations.
 SAS feeds the sensor through three filters in a row and gives you a sensor for each step.
 
-![Input, lowpass, median and EMA with default settings](assets/visualization.png)
+![Input, lowpass, median and EMA with default settings](docs/images/visualization.png)
 
 **Documentation:** [Wiki](https://github.com/woopstar/smoothing_analytics_sensors/wiki)
 
