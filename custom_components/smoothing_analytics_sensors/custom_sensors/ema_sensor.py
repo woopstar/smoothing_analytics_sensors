@@ -245,8 +245,10 @@ class EmaSensor(SmoothingAnalyticsEntity, RestoreEntity):
             _LOGGER.info(
                 f"Starting to track state changes for entity_id {self._input_entity_id}"
             )
-            async_track_state_change_event(
-                self.hass, [self._input_entity_id], self._handle_update
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, [self._input_entity_id], self._handle_update
+                )
             )
         else:
             _LOGGER.error(
