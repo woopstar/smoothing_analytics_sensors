@@ -29,6 +29,20 @@ SAS feeds the sensor through three filters in a row and gives you a sensor for e
 Details: [Visualization](docs/visualization.md) · [Filter math](docs/filter-math.md) ·
 [Sensors reference](docs/sensors-reference.md)
 
+## Why Not the Built-In Helpers?
+
+Home Assistant has **Filter** and **Statistics** helpers. SAS adds what they lack:
+
+| Need                   | HA Filter / Statistics                           | SAS                                   |
+| ---------------------- | ------------------------------------------------ | ------------------------------------- |
+| Response time          | Filter lowpass counts state changes              | Real seconds, at any update rate      |
+| EMA with a known delay | No                                               | 95 % of a step after a set time       |
+| Chain of filters in UI | One filter or value per helper, chains need YAML | Three stages, a sensor for each       |
+| Change the input       | New helper                                       | Reconfigure keeps entity IDs, history |
+
+Need one moving average, a range or an outlier filter? The built-in helpers are enough.
+More: [Why SAS](docs/why-sas.md)
+
 ## Installation
 
 Requires Home Assistant 2024.11 or newer.
