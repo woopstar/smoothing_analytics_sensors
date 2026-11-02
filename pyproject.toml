@@ -1,0 +1,72 @@
+[project]
+name = "smoothing_analytics_sensors"
+version = "0.0.0"
+description = "Home Assistant integration that smooths any numeric sensor with lowpass, moving median and EMA filters"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.14"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+include = ["custom_components/**/*.py", "tests/**/*.py", "scripts/**/*.py", ".github/scripts/**/*.py"]
+
+[tool.ruff.lint]
+select = [
+    "B007",    # Loop control variable {name} not used within loop body
+    "B014",    # Exception handler with duplicate exception
+    "E",       # pycodestyle
+    "F",       # pyflakes/autoflake
+    "I",       # isort
+    "ICN001",  # import conventions
+    "PGH004",  # Use specific rule codes when using noqa
+    "PLC0414", # Useless import alias
+    "SIM105",  # Use contextlib.suppress
+    "SIM117",  # Merge with-statements
+    "SIM118",  # Use {key} in {dict}
+    "SIM201",  # Use {left} != {right}
+    "SIM212",  # Use {a} if {a} else {b}
+    "SIM300",  # Yoda conditions
+    "SIM401",  # Use get from dict with default
+    "T20",     # flake8-print
+    "TRY004",  # Prefer TypeError exception for invalid type
+    "RUF006",  # Store a reference to the return value of asyncio.create_task
+    "UP",      # pyupgrade
+    "W",       # pycodestyle
+]
+ignore = [
+    "E501", # line too long
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components"]
+combine-as-imports = true
+section-order = ["future", "standard-library", "third-party", "homeassistant", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+homeassistant = ["homeassistant"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"scripts/*.py" = ["T201"]
+".github/scripts/*.py" = ["T201"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v --strict-markers"
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["custom_components"]
+relative_files = true

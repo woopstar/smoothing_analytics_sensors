@@ -10,18 +10,23 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+permissions:
+  contents: read
+
 jobs:
   update_release_draft:
     name: Update release draft
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Create Release
-        uses: release-drafter/release-drafter@v6
-        with:
-          disable-releaser: github.ref != 'refs/heads/main'
+        uses: release-drafter/release-drafter@v7.10.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

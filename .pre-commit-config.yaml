@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: mixed-line-ending
+
+  - repo: local
+    hooks:
+      - id: lint
+        name: Format and lint (ruff + prettier)
+        language: system
+        entry: ./scripts/quality.sh
+        args: [lint]
+        pass_filenames: false
+        always_run: true
+
+      - id: translations
+        name: Translations in sync (en/da)
+        language: system
+        entry: ./scripts/quality.sh
+        args: [translations]
+        pass_filenames: false
+        always_run: true

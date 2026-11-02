@@ -5,13 +5,16 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   validate-hassfest:
     name: Hassfest validation
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: validation
         uses: home-assistant/actions/hassfest@master
 
@@ -20,7 +23,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: checkout
-        uses: "actions/checkout@v7"
+        uses: "actions/checkout@v7.0.1"
       - name: validation
         uses: "hacs/action@main"
         with:

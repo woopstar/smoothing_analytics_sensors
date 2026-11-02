@@ -1,0 +1,65 @@
+name: Lint and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  lint:
+    name: Lint, validate and type check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install lint tooling
+        run: python3 -m pip install --disable-pip-version-check -r requirements_lint.txt pyyaml
+
+      - name: Validate YAML and JSON
+        run: ./scripts/quality.sh validate
+
+      - name: Validate translations
+        run: ./scripts/quality.sh translations
+
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: "./scripts"
+
+      - name: Check formatting and lint
+        run: ./scripts/quality.sh format-check
+
+      - name: Type check
+        run: ./scripts/quality.sh typing
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: ".python-version"
+          cache: pip
+          cache-dependency-path: requirements_test.txt
+
+      - name: Install test dependencies
+        run: python3 -m pip install --disable-pip-version-check -r requirements_test.txt
+
+      - name: Run tests
+        run: ./scripts/quality.sh test
