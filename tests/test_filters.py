@@ -102,6 +102,39 @@ def test_median_window_keeps_last_values() -> None:
     assert window == [2.0, 3.0, 4.0]
 
 
+def test_median_uses_exactly_sampling_size_values() -> None:
+    """With a full window the median is over the last sampling_size values."""
+    median, window = median_filter([10.0, 15.0, 17.5], 18.75, 3)
+    assert window == [15.0, 17.5, 18.75]
+    assert median == pytest.approx(17.5)
+
+
+def test_median_odd_window_returns_a_sample() -> None:
+    """An odd window never averages two values."""
+    window: list[float] = []
+    for value in [1.0, 9.0, 2.0, 8.0, 3.0, 7.0]:
+        median, window = median_filter(window, value, 3)
+    assert median in window
+
+
+def test_median_smaller_window_trims_restored_values() -> None:
+    """A window restored from a larger setting is trimmed to the new size."""
+    median, window = median_filter([1.0, 2.0, 3.0, 4.0, 5.0], 6.0, 3)
+    assert window == [4.0, 5.0, 6.0]
+    assert median == pytest.approx(5.0)
+
+
+def test_median_spike_shorter_than_half_window_is_removed() -> None:
+    """A one-sample spike in a window of 3 never reaches the output."""
+    window: list[float] = []
+    outputs = []
+    for value in [10.0, 10.0, 10.0, 100.0, 10.0, 10.0]:
+        median, window = median_filter(window, value, 3)
+        if median is not None:
+            outputs.append(median)
+    assert max(outputs) == pytest.approx(10.0)
+
+
 def test_median_filter_does_not_mutate_input() -> None:
     """The caller's window list is left unchanged."""
     window = [1.0, 2.0]
