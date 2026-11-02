@@ -73,6 +73,11 @@ Target time in seconds for the EMA to follow a step change. The EMA uses the rea
 updates and reaches 95 % of a step after exactly this time, for any update rate. See
 [Filter math](filter-math.md#ema).
 
+Entries created before 2.0.0 stored an EMA window of N samples (`ema_smoothing_window`), which
+releases 2.0.0 to 2.x ignored. Version 3.0.0 converts it once on start: the new value is the time
+that window took to reach 95 %, assuming 1 s updates (or the stored update interval), clamped to
+10–600 s. A window of 300 becomes 449 s. A value already set for this field is kept.
+
 ## Presets
 
 | Use case                         | Lowpass (s) | Median | EMA (s) |
