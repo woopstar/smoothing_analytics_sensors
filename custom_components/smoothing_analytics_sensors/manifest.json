@@ -9,5 +9,5 @@
     "integration_type": "helper",
     "iot_class": "calculated",
     "issue_tracker": "https://github.com/woopstar/smoothing_analytics_sensors/issues",
-    "version": "2.3.1"
+    "version": "3.0.0-beta.1"
 }
