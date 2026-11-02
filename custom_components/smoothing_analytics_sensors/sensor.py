@@ -4,7 +4,6 @@ from .const import (
     DEFAULT_EMA_DESIRED_TIME_TO_95,
     DEFAULT_LOW_PASS,
     DEFAULT_MEDIAN_SIZE,
-    DOMAIN,
 )
 from .custom_sensors.ema_sensor import EmaSensor
 from .custom_sensors.lowpass_sensor import LowpassSensor
@@ -54,16 +53,3 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Add sensors to Home Assistant
     async_add_entities([lowpass_sensor, median_sensor, ema_sensor])
-
-    # Store reference to the platform to handle unloads later
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
-    hass.data[DOMAIN][config_entry.entry_id] = async_add_entities
-
-
-async def async_unload_entry(hass, entry):
-    """Handle unloading of an entry."""
-    platform = hass.data[DOMAIN].get(entry.entry_id)
-    if platform:
-        return await platform.async_remove_entry(entry)
-    return False
