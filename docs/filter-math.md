@@ -13,7 +13,7 @@ Home Assistant does not poll the sensors (`should_poll = False`).
 
 There is no periodic tick. While the input stays constant, the outputs stay where they are, and
 the median window only holds real upstream readings. `Δt` is always the time between two real
-updates.
+updates, measured in UTC, so DST changes and time zone changes do not affect it.
 
 Output is rounded to 2 decimals after every update.
 

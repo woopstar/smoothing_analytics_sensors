@@ -31,48 +31,48 @@ Because the unit and device class are standard, Home Assistant also converts uni
 
 ### Lowpass
 
-| Attribute                | Meaning                                 |
-| ------------------------ | --------------------------------------- |
-| `input_sensor`           | Input entity_id                         |
-| `last_updated`           | ISO timestamp of the last filter update |
-| `lowpass_time_constant`  | Active time constant                    |
-| `previous_value`         | Output before the last update           |
-| `sensor_hash`            | MD5 of the input entity_id              |
-| `sensor_update_interval` | Seconds between the last two updates    |
-| `type`                   | `lowpass`                               |
-| `unique_id`              | Entity unique_id                        |
+| Attribute                | Meaning                              |
+| ------------------------ | ------------------------------------ |
+| `input_sensor`           | Input entity_id                      |
+| `last_updated`           | UTC ISO timestamp of the last update |
+| `lowpass_time_constant`  | Active time constant                 |
+| `previous_value`         | Output before the last update        |
+| `sensor_hash`            | MD5 of the input entity_id           |
+| `sensor_update_interval` | Seconds between the last two updates |
+| `type`                   | `lowpass`                            |
+| `unique_id`              | Entity unique_id                     |
 
 ### Median
 
-| Attribute                | Meaning                                 |
-| ------------------------ | --------------------------------------- |
-| `data_points`            | Current window values                   |
-| `data_points_count`      | Values in the window                    |
-| `input_entity_id`        | Resolved lowpass entity_id              |
-| `input_unique_id`        | Lowpass unique_id                       |
-| `last_updated`           | ISO timestamp of the last filter update |
-| `median_sampling_size`   | Window size N                           |
-| `missing_data_points`    | N minus values in the window            |
-| `sensor_hash`            | MD5 of the input entity_id              |
-| `sensor_update_interval` | Seconds between the last two updates    |
-| `type`                   | `moving_median`                         |
-| `unique_id`              | Entity unique_id                        |
+| Attribute                | Meaning                              |
+| ------------------------ | ------------------------------------ |
+| `data_points`            | Current window values                |
+| `data_points_count`      | Values in the window                 |
+| `input_entity_id`        | Resolved lowpass entity_id           |
+| `input_unique_id`        | Lowpass unique_id                    |
+| `last_updated`           | UTC ISO timestamp of the last update |
+| `median_sampling_size`   | Window size N                        |
+| `missing_data_points`    | N minus values in the window         |
+| `sensor_hash`            | MD5 of the input entity_id           |
+| `sensor_update_interval` | Seconds between the last two updates |
+| `type`                   | `moving_median`                      |
+| `unique_id`              | Entity unique_id                     |
 
 ### EMA
 
-| Attribute                  | Meaning                                 |
-| -------------------------- | --------------------------------------- |
-| `alpha`                    | Coefficient used in the last update     |
-| `desired_time_to_95`       | Active setting                          |
-| `input_entity_id`          | Resolved median entity_id               |
-| `input_unique_id`          | Median unique_id                        |
-| `last_updated`             | ISO timestamp of the last filter update |
-| `number_of_updates_needed` | `desired_time_to_95 / Δt`               |
-| `previous_value`           | Output before the last update           |
-| `sensor_hash`              | MD5 of the input entity_id              |
-| `sensor_update_interval`   | Seconds between the last two updates    |
-| `type`                     | `ema`                                   |
-| `unique_id`                | Entity unique_id                        |
+| Attribute                  | Meaning                              |
+| -------------------------- | ------------------------------------ |
+| `alpha`                    | Coefficient used in the last update  |
+| `desired_time_to_95`       | Active setting                       |
+| `input_entity_id`          | Resolved median entity_id            |
+| `input_unique_id`          | Median unique_id                     |
+| `last_updated`             | UTC ISO timestamp of the last update |
+| `number_of_updates_needed` | `desired_time_to_95 / Δt`            |
+| `previous_value`           | Output before the last update        |
+| `sensor_hash`              | MD5 of the input entity_id           |
+| `sensor_update_interval`   | Seconds between the last two updates |
+| `type`                     | `ema`                                |
+| `unique_id`                | Entity unique_id                     |
 
 ## Device
 
