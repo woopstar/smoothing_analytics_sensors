@@ -19,8 +19,13 @@ Renaming does not break the stack: median and EMA find their input by unique_id.
 
 ## Unit, Device Class and State Class
 
-Each stage copies `unit_of_measurement`, `device_class` and `state_class` from its input on every
-update. Before the first update they are empty.
+All stages are Home Assistant `SensorEntity` sensors. Each stage copies `unit_of_measurement`,
+`device_class` and `state_class` from its input on every update. Before the first update they are
+empty.
+
+With a `state_class` the sensor gets long-term statistics and can be used in statistics cards.
+Because the unit and device class are standard, Home Assistant also converts units (for example
+°C to °F) to match your unit system.
 
 ## Attributes
 
