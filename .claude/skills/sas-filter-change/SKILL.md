@@ -41,6 +41,7 @@ Add parametrized tests in `tests/test_filters.py`:
 
 ## Step 5: Docs and Release Note
 
-- Update `docs/filter-math.md` and the README "Key Parameters" section in the same PR.
+- Update `docs/filter-math.md` in the same PR. If defaults change, update the README "How It Works" table.
+- Regenerate the figure: `uv run --no-project --with matplotlib python scripts/plot_filters.py`.
 - Label the PR `breaking-change` if existing users will see different values for the
   same settings, and explain the change in the PR body.
