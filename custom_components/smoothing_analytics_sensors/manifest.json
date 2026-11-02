@@ -1,6 +1,10 @@
 {
     "domain": "smoothing_analytics_sensors",
     "name": "Smoothing Analytics Sensors",
+    "categories": [
+        "helpers.calculate_value",
+        "energy.meters_monitoring"
+    ],
     "codeowners": [
         "@woopstar"
     ],

@@ -33,7 +33,13 @@ Details: [Visualization](docs/visualization.md) · [Filter math](docs/filter-mat
 
 Requires Home Assistant 2024.11 or newer.
 
-**HACS (recommended)**
+**Marketplace (Home Assistant 2026.11+)**
+
+1. **Settings → Marketplace → Add from link**.
+2. Paste `https://github.com/woopstar/smoothing_analytics_sensors` as **Integration**.
+3. Download and restart Home Assistant. HACS installs migrate on their own.
+
+**HACS (Home Assistant 2026.10 and older)**
 
 1. HACS → **⋮ → Custom repositories**.
 2. Add `https://github.com/woopstar/smoothing_analytics_sensors` as **Integration**.
@@ -46,7 +52,8 @@ More: [Installation](docs/installation.md)
 
 ## Setup
 
-**Settings → Devices & services → Add integration → Smoothing Analytics Sensors**
+SAS is a helper: **Settings → Devices & services → Helpers → Create helper → Smoothing Analytics
+Sensors**
 
 | Field                         | Default                     | Range      |
 | ----------------------------- | --------------------------- | ---------- |
