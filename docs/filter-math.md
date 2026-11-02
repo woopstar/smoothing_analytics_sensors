@@ -8,12 +8,12 @@ seconds since the sensor's own previous update.
 
 ## When a Stage Updates
 
-Each stage updates when:
+Each stage updates only when its upstream entity changes state (`async_track_state_change_event`).
+Home Assistant does not poll the sensors (`should_poll = False`).
 
-1. its upstream entity changes state (`async_track_state_change_event`), and
-2. Home Assistant polls it. The sensors do not set `should_poll = False`, so Home Assistant also
-   calls `async_update` every 30 seconds. A poll feeds the current upstream value into the filter
-   again, even when the upstream value has not changed.
+There is no periodic tick. While the input stays constant, the outputs stay where they are, and
+the median window only holds real upstream readings. `Δt` is always the time between two real
+updates.
 
 Output is rounded to 2 decimals after every update.
 

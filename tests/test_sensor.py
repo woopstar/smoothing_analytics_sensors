@@ -6,6 +6,7 @@ import pytest
 from freezegun.api import FrozenDateTimeFactory
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
+    async_fire_time_changed,
     mock_restore_cache,
 )
 
@@ -253,6 +254,26 @@ async def test_sensors_publish_state_class(
         assert state.attributes["state_class"] == "measurement"
         assert state.attributes["unit_of_measurement"] == "W"
         assert state.attributes["device_class"] == "power"
+
+
+async def test_sensors_are_not_polled(
+    hass: HomeAssistant, config_entry: MockConfigEntry, freezer: FrozenDateTimeFactory
+) -> None:
+    """Without upstream changes no stage updates, even after 5 minutes."""
+    ids = await setup_entry(hass, config_entry)
+    await push(hass, "10")
+    before = {stage: hass.states.get(ids[stage]) for stage in STAGES}
+
+    for _ in range(10):
+        freezer.tick(30)
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done()
+
+    for stage in STAGES:
+        state = hass.states.get(ids[stage])
+        assert state.last_updated == before[stage].last_updated
+        assert state.attributes == before[stage].attributes
+    assert hass.states.get(ids["median"]).attributes["data_points"] == [10.0]
 
 
 # Known bugs. strict=True turns them into failures once the issue is fixed,
