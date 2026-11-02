@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   lint:
-    name: Lint, validate and type check
+    name: Lint and validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,11 +40,8 @@ jobs:
       - name: Check formatting and lint
         run: ./scripts/quality.sh format-check
 
-      - name: Type check
-        run: ./scripts/quality.sh typing
-
   test:
-    name: Tests
+    name: Type check and tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,8 +55,12 @@ jobs:
           cache: pip
           cache-dependency-path: requirements_test.txt
 
+      # mypy needs Home Assistant installed to resolve its base classes.
       - name: Install test dependencies
-        run: python3 -m pip install --disable-pip-version-check -r requirements_test.txt
+        run: python3 -m pip install --disable-pip-version-check -r requirements_test.txt -r requirements_lint.txt
+
+      - name: Type check
+        run: ./scripts/quality.sh typing
 
       - name: Run tests
         run: ./scripts/quality.sh test
