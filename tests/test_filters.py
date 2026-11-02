@@ -5,12 +5,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from custom_components.smoothing_analytics_sensors.custom_sensors.ema_sensor import (
+from custom_components.smoothing_analytics_sensors.filters import (
     calculate_alpha,
     ema_filter,
-)
-from custom_components.smoothing_analytics_sensors.custom_sensors.lowpass_sensor import (
     lowpass_filter,
+    median_filter,
 )
 from custom_components.smoothing_analytics_sensors.utils.misc import (
     generate_md5_hash,
@@ -85,6 +84,29 @@ def test_ema_filter_blends_by_alpha() -> None:
 def test_ema_constant_input_stays_constant() -> None:
     """A steady input is a fixed point of the filter."""
     assert ema_filter(42.0, 42.0, 0.3) == pytest.approx(42.0)
+
+
+def test_median_is_none_until_window_full() -> None:
+    """The median stays None until sampling_size values are collected."""
+    median, window = median_filter([], 5.0, 3)
+    assert median is None
+    assert window == [5.0]
+    median, window = median_filter([5.0, 1.0], 3.0, 3)
+    assert median == pytest.approx(3.0)
+    assert window == [5.0, 1.0, 3.0]
+
+
+def test_median_window_keeps_last_values() -> None:
+    """The returned window holds the last sampling_size values."""
+    _, window = median_filter([1.0, 2.0, 3.0], 4.0, 3)
+    assert window == [2.0, 3.0, 4.0]
+
+
+def test_median_filter_does_not_mutate_input() -> None:
+    """The caller's window list is left unchanged."""
+    window = [1.0, 2.0]
+    median_filter(window, 3.0, 2)
+    assert window == [1.0, 2.0]
 
 
 def test_md5_hash_of_entity_id() -> None:

@@ -73,6 +73,7 @@ Or `./scripts/quality.sh all`.
 
 ## File Organization
 
-- One sensor class per file in `custom_sensors/`.
+- One sensor class per file in `custom_sensors/`, subclassing `SmoothingAnalyticsSensor`.
+- Filter math only in `filters.py`, as pure functions.
 - Shared behavior (input resolution, restore, listener lifecycle) in one base class.
 - Shared helpers in `utils/`. A helper used twice lives in `utils/`.
