@@ -19,6 +19,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from custom_components.smoothing_analytics_sensors.const import DOMAIN, ICON
+from custom_components.smoothing_analytics_sensors.filters import calculate_alpha
 from custom_components.smoothing_analytics_sensors.utils.misc import (
     generate_md5_hash,
 )
@@ -319,6 +320,26 @@ async def test_restored_naive_timestamp_is_read_as_local_time(
     ] == pytest.approx(60)
 
 
+async def test_restore_keeps_update_interval(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """The saved sensor_update_interval is restored and drives the EMA alpha."""
+    ids = await preregister(hass, config_entry)
+    mock_restore_cache(
+        hass,
+        [
+            State(ids["lowpass"], "42.5", {"sensor_update_interval": 7}),
+            State(ids["ema"], "40.0", {"sensor_update_interval": 7}),
+        ],
+    )
+    await setup_entry(hass, config_entry)
+
+    assert hass.states.get(ids["lowpass"]).attributes["sensor_update_interval"] == 7
+    ema = hass.states.get(ids["ema"]).attributes
+    assert ema["sensor_update_interval"] == 7
+    assert ema["alpha"] == pytest.approx(calculate_alpha(20, 7))
+
+
 # Known bugs. strict=True turns them into failures once the issue is fixed,
 # so the fix PR has to remove the marker.
 
@@ -332,19 +353,6 @@ async def test_median_window_holds_sampling_size_values(
     for value in ("10", "20", "20.0", "20"):
         await push(hass, value)
     assert float(hass.states.get(ids["median"]).state) == pytest.approx(17.5)
-
-
-@pytest.mark.xfail(strict=True, reason="#68: restore reads 'update_interval'")
-async def test_restore_keeps_update_interval(
-    hass: HomeAssistant, config_entry: MockConfigEntry
-) -> None:
-    """The restored update interval is the saved sensor_update_interval."""
-    ids = await preregister(hass, config_entry)
-    mock_restore_cache(
-        hass, [State(ids["lowpass"], "42.5", {"sensor_update_interval": 30})]
-    )
-    await setup_entry(hass, config_entry)
-    assert hass.states.get(ids["lowpass"]).attributes["sensor_update_interval"] == 30
 
 
 @pytest.mark.xfail(strict=True, reason="#71: unavailable input logs a warning")
