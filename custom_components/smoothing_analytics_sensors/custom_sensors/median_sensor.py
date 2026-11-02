@@ -34,8 +34,11 @@ class MedianSensor(SmoothingAnalyticsSensor):
 
     def _update_settings(self):
         """Fetch updated settings from config_entry options."""
-        self._sampling_size = get_config_value(
-            self._config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE
+        # Older entries stored the window as a float from the number selector
+        self._sampling_size = int(
+            get_config_value(
+                self._config_entry, "median_sampling_size", DEFAULT_MEDIAN_SIZE
+            )
         )
         _LOGGER.debug("Updated Median settings: sampling_size=%s", self._sampling_size)
 

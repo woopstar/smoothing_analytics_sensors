@@ -455,3 +455,17 @@ async def test_median_window_holds_sampling_size_values(
     for value in ("10", "20", "20.0", "20"):
         await push(hass, value)
     assert float(hass.states.get(ids["median"]).state) == pytest.approx(17.5)
+
+
+async def test_float_window_from_older_entries_is_an_int(hass: HomeAssistant) -> None:
+    """A median window stored as 3.0 by older releases is used as 3."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=2,
+        data={"input_sensor": INPUT_SENSOR, "median_sampling_size": 3.0},
+    )
+    entry.add_to_hass(hass)
+    ids = await setup_entry(hass, entry)
+    size = hass.states.get(ids["median"]).attributes["median_sampling_size"]
+    assert size == 3
+    assert isinstance(size, int)

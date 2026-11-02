@@ -14,6 +14,7 @@ from .const import (
     DOMAIN,
     NAME,
 )
+from .utils.misc import get_config_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._errors["input_sensor"] = "required"
             else:
                 # Remember the registry id so the input can be renamed later
-                data = dict(user_input)
+                data = _normalize(user_input)
                 entry = er.async_get(self.hass).async_get(data["input_sensor"])
                 if entry is not None:
                     data["input_entity_uuid"] = entry.id
@@ -62,40 +63,11 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     {"entity": {"domain": "sensor"}}
                 ),
                 vol.Optional("device_name", default=NAME): str,
-                vol.Optional(
-                    "lowpass_time_constant", default=DEFAULT_LOW_PASS
-                ): selector(
+                **_filter_schema(
                     {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "median_sampling_size", default=DEFAULT_MEDIAN_SIZE
-                ): selector(
-                    {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
-                            "unit_of_measurement": "samples",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "desired_time_to_95", default=DEFAULT_EMA_DESIRED_TIME_TO_95
-                ): selector(
-                    {
-                        "number": {
-                            "min": 10,
-                            "max": 600,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
+                        "lowpass_time_constant": DEFAULT_LOW_PASS,
+                        "median_sampling_size": DEFAULT_MEDIAN_SIZE,
+                        "desired_time_to_95": DEFAULT_EMA_DESIRED_TIME_TO_95,
                     }
                 ),
             }
@@ -110,81 +82,75 @@ class SmoothingAnalyticsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Return the options flow."""
-        return SmoothingAnalyticsOptionsFlow(config_entry)
+        return SmoothingAnalyticsOptionsFlow()
 
 
 class SmoothingAnalyticsOptionsFlow(config_entries.OptionsFlow):
     """Options flow for Smoothing Analytics Sensors."""
 
-    def __init__(self, config_entry):
-        """Initialize options flow."""
-        self._config_entry = config_entry
-
     async def async_step_init(self, user_input=None):
         """Handle options step."""
         if user_input is not None:
-            # Update the device name in options flow
-            return self.async_create_entry(
-                title=user_input.get("device_name", self._config_entry.title),
-                data=user_input,
-            )
+            # The update listener syncs the entry title with device_name
+            return self.async_create_entry(data=_normalize(user_input))
 
-        # Use default values from options and translations
+        # Defaults are the current values: options first, then data
+        entry = self.config_entry
         data_schema = vol.Schema(
             {
                 vol.Optional(
                     "device_name",
-                    default=self._config_entry.options.get("device_name", NAME),
+                    default=get_config_value(entry, "device_name", entry.title),
                 ): str,
-                vol.Optional(
-                    "lowpass_time_constant",
-                    default=self._config_entry.options.get(
-                        "lowpass_time_constant", DEFAULT_LOW_PASS
-                    ),
-                ): selector(
+                **_filter_schema(
                     {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "median_sampling_size",
-                    default=self._config_entry.options.get(
-                        "median_sampling_size", DEFAULT_MEDIAN_SIZE
-                    ),
-                ): selector(
-                    {
-                        "number": {
-                            "min": 1,
-                            "max": 60,
-                            "unit_of_measurement": "samples",
-                            "mode": "box",
-                        }
-                    }
-                ),
-                vol.Optional(
-                    "desired_time_to_95",
-                    default=self._config_entry.options.get(
-                        "desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95
-                    ),
-                ): selector(
-                    {
-                        "number": {
-                            "min": 1,
-                            "max": 600,
-                            "unit_of_measurement": "seconds",
-                            "mode": "box",
-                        }
+                        key: get_config_value(entry, key, default)
+                        for key, default in (
+                            ("lowpass_time_constant", DEFAULT_LOW_PASS),
+                            ("median_sampling_size", DEFAULT_MEDIAN_SIZE),
+                            ("desired_time_to_95", DEFAULT_EMA_DESIRED_TIME_TO_95),
+                        )
                     }
                 ),
             }
         )
 
-        return self.async_show_form(
-            step_id="init",
-            data_schema=data_schema,
-        )
+        return self.async_show_form(step_id="init", data_schema=data_schema)
+
+
+def _number(minimum, maximum, unit):
+    """Return a number box selector."""
+    return selector(
+        {
+            "number": {
+                "min": minimum,
+                "max": maximum,
+                "step": 1,
+                "unit_of_measurement": unit,
+                "mode": "box",
+            }
+        }
+    )
+
+
+def _filter_schema(defaults):
+    """Return the filter fields shared by the config and options flow."""
+    return {
+        vol.Optional(
+            "lowpass_time_constant", default=defaults["lowpass_time_constant"]
+        ): _number(1, 60, "seconds"),
+        vol.Optional(
+            "median_sampling_size", default=defaults["median_sampling_size"]
+        ): _number(1, 60, "samples"),
+        vol.Optional(
+            "desired_time_to_95", default=defaults["desired_time_to_95"]
+        ): _number(10, 600, "seconds"),
+    }
+
+
+def _normalize(user_input):
+    """Store the median window as an int; the number selector returns floats."""
+    data = dict(user_input)
+    if "median_sampling_size" in data:
+        data["median_sampling_size"] = int(data["median_sampling_size"])
+    return data

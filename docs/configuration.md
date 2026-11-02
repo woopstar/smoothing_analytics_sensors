@@ -20,12 +20,14 @@ SAS allows one entry per input sensor. Adding the same sensor again stops with "
 
 **Settings → Devices & services → Smoothing Analytics Sensors → Configure** lets you change:
 
-| Field                          | Key                     | Range |
-| ------------------------------ | ----------------------- | ----- |
-| Name                           | `device_name`           | text  |
-| Lowpass Time Constant          | `lowpass_time_constant` | 1–60  |
-| Median Sampling Size           | `median_sampling_size`  | 1–60  |
-| EMA Desired Time to Reach 95 % | `desired_time_to_95`    | 1–600 |
+| Field                          | Key                     | Range  |
+| ------------------------------ | ----------------------- | ------ |
+| Name                           | `device_name`           | text   |
+| Lowpass Time Constant          | `lowpass_time_constant` | 1–60   |
+| Median Sampling Size           | `median_sampling_size`  | 1–60   |
+| EMA Desired Time to Reach 95 % | `desired_time_to_95`    | 10–600 |
+
+The form starts with the current values. Ranges are the same as in the config flow.
 
 The input sensor cannot be swapped for another sensor. Delete the entry and add a new one instead.
 Renaming the input sensor's entity_id is fine: SAS stores its registry id and follows the rename.

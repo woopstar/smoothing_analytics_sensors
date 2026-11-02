@@ -4,7 +4,7 @@
 
 | Item           | Value                                      |
 | -------------- | ------------------------------------------ |
-| Home Assistant | 2024.6.0 or newer (see `hacs.json`)        |
+| Home Assistant | 2024.11.0 or newer (see `hacs.json`)       |
 | Input sensor   | Any `sensor.*` entity with a numeric state |
 
 ## HACS (Recommended)
