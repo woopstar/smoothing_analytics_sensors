@@ -179,7 +179,11 @@ class SmoothingAnalyticsSensor(RestoreSensor):
                 self._reset_extra()
 
             self._last_updated = old_state.attributes.get("last_updated", None)
-            self._update_interval = old_state.attributes.get("update_interval", 1)
+            self._update_interval = old_state.attributes.get(
+                "sensor_update_interval", 1
+            )
+            # Recalculate derived settings (EMA alpha) from the restored interval
+            self._update_settings()
         else:
             _LOGGER.info(
                 "No previous state found for %s, starting fresh", self.unique_id

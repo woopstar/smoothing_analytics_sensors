@@ -103,4 +103,6 @@ The stages are in series, so delays add up. With 1-second input updates and defa
 ## Restore After Restart
 
 All three stages restore their last state with `RestoreSensor`. The median also restores its
-window. The restored `last_updated` makes the first `Δt` after restart as long as the downtime.
+window. `sensor_update_interval` is restored too, so the EMA starts with the alpha it had before
+the restart. The restored `last_updated` makes the first `Δt` after restart as long as the
+downtime.
