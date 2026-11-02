@@ -51,6 +51,9 @@ Values are read with `get_config_value()`: options first, then data, then defaul
 
 ## Canonical Patterns
 
+- New stage logic goes in `SmoothingAnalyticsSensor` subclasses: set `_type` and `_name_prefix`,
+  implement `_apply(value)`, and `_restore_extra` / `_reset_extra` for extra restored values.
+- Filter math lives only in `filters.py` and is tested in `tests/test_filters.py`.
 - Config lookup: `utils.misc.get_config_value(entry, key, default)`. Never read
   `entry.options` or `entry.data` directly for filter parameters.
 - Unique IDs: `sas_<type>_<hash>`. Changing this breaks history and needs a migration.

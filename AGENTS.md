@@ -28,6 +28,8 @@ configuration keys.
 | --------------------------------------------------------------- | --------------------------------------------------- |
 | `custom_components/smoothing_analytics_sensors/`                | The integration                                     |
 | `custom_components/smoothing_analytics_sensors/custom_sensors/` | One module per filter sensor (lowpass, median, EMA) |
+| `custom_components/smoothing_analytics_sensors/filters.py`      | Pure filter math                                    |
+| `custom_components/smoothing_analytics_sensors/entity.py`       | Shared base sensor                                  |
 | `custom_components/smoothing_analytics_sensors/translations/`   | `en.json` (source of truth) and `da.json`           |
 | `tests/`                                                        | pytest suite                                        |
 | `docs/`                                                         | User and developer docs, synced to the GitHub wiki  |
