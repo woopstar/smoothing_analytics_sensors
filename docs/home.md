@@ -40,6 +40,7 @@ SAS was extracted from the smoothing logic in
 | Domain               | `smoothing_analytics_sensors`       |
 | Setup                | UI config flow, one entry per input |
 | Platforms            | `sensor`                            |
+| Integration type     | Helper, IoT class `calculated`      |
 | Sensors per entry    | 3 (lowpass, median, EMA)            |
 | Runtime dependencies | None                                |
 | Languages            | English, Danish                     |
